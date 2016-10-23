@@ -1,0 +1,8 @@
+﻿<h1>Images capturées</h1>
+<div *ngIf="loading">
+</div>
+<div *ngIf="!loading">
+    <a *ngFor="let image of images">
+        {{image.name}}
+    </a>
+</div>

@@ -1,0 +1,15 @@
+﻿<div class="container">
+    <fieldset [disabled]="loggingIn">
+        <form class="form-signin">
+            <h2 class="form-signin-heading">Authentification</h2>
+            <hr />
+            <ngb-alert *ngIf="error" type="danger" [dismissible]="false">
+                Nom d'utilisateur ou mot de passe incorrect.
+            </ngb-alert>
+            <input name="username" [(ngModel)]="username" type="text" id="inputEmail" class="form-control form-signin-control" placeholder="Nom d'utilisateur" required autofocus>
+            <input name="password" [(ngModel)]="password" type="password" id="inputPassword" class="form-control form-signin-control" placeholder="Mot de passe" required>
+            <hr />
+            <button (click)="login()" class="btn btn-lg btn-primary btn-block" type="submit">Connexion</button>
+        </form>
+    </fieldset>
+</div>
