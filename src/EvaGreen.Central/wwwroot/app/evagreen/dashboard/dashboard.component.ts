@@ -1,5 +1,8 @@
 ﻿import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+
 import { ImageService, Image } from '../shared/image.service';
+import { UserService } from '../shared/user.service';
 
 @Component({
     moduleId: module.id,
@@ -12,13 +15,18 @@ export class DashboardComponent {
     loading: boolean;
     images: Image[];
 
-    constructor(private imageService: ImageService) {
+    constructor(private imageService: ImageService, private user: UserService, private router: Router) {
         this.loading = true;
         this.images = [];
     }
 
     ngOnInit() {
-        this.loadImages();
+        if (!this.user.isLoggedIn()) {
+            this.router.navigate(['/login']);
+        }
+        else {
+            this.loadImages();
+        }
     }
 
     loadImages() {

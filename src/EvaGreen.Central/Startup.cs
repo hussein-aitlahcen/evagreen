@@ -57,10 +57,9 @@ namespace EvaGreen.Central
             });
 
             app.UseStaticFiles();
-            var libPath = Path.GetFullPath(Path.Combine(env.WebRootPath, @"..\node_modules\"));
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(libPath),
+                FileProvider = new PhysicalFileProvider(Path.Combine(env.WebRootPath, "../node_modules")),
                 RequestPath = new PathString("/node_modules")
             });
 
