@@ -1,5 +1,8 @@
 ﻿{
     "compileOnSave": true,
+    "files": [
+        "wwwroot/**/*.ts"
+    ],
     "compilerOptions": {
         "target": "es5",
         "module": "commonjs",
