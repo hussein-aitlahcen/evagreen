@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EvaGreen.Central.Controllers
@@ -10,8 +6,9 @@ namespace EvaGreen.Central.Controllers
     public sealed class Image
     {
         public string Name { get; set; }
+        public string UniqueId { get; set; }
     }
-    
+
     [Authorize]
     [Route("api/[controller]")]
     public sealed class ImageController : Controller
@@ -23,6 +20,7 @@ namespace EvaGreen.Central.Controllers
             {
                 new Image
                 {
+                    UniqueId = "01_01_01",
                     Name = "hello.jpg",
                 }
             });

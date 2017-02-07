@@ -25,13 +25,11 @@ namespace EvaGreen.Central.Middlewares.Token
 
         public Task Invoke(HttpContext context)
         {
-            // If the request path doesn't match, skip
             if (!context.Request.Path.Equals(_options.Path, StringComparison.Ordinal))
             {
                 return _next(context);
             }
 
-            // Request must be POST with Content-Type: application/x-www-form-urlencoded
             if (!context.Request.Method.Equals("POST")
                || !context.Request.HasFormContentType)
             {
@@ -56,9 +54,6 @@ namespace EvaGreen.Central.Middlewares.Token
             }
 
             var now = DateTime.UtcNow;
-
-            // Specifically add the jti (random nonce), iat (issued timestamp), and sub (subject/user) claims.
-            // You can add other claims here, if you want:
             var claims = new Claim[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, username),
@@ -67,7 +62,6 @@ namespace EvaGreen.Central.Middlewares.Token
                     ClaimValueTypes.Integer64)
             };
 
-            // Create the JWT and write it to a string
             var jwt = new JwtSecurityToken(
                 issuer: _options.Issuer,
                 audience: _options.Audience,
@@ -83,14 +77,13 @@ namespace EvaGreen.Central.Middlewares.Token
                 expires_in = (int)_options.Expiration.TotalSeconds
             };
 
-            // Serialize and return the response
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.Indented }));
         }
 
         private Task<ClaimsIdentity> GetIdentity(string username, string password)
         {
-            if (username == "admin" && password == "l33tgreen")
+            if (username == "admin" && password == "admin")
             {
                 return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
             }

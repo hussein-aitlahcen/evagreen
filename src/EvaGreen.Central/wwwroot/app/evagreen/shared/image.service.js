@@ -1,4 +1,3 @@
-"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -15,7 +14,7 @@ var Image = (function () {
         this.name = name;
     }
     return Image;
-}());
+})();
 exports.Image = Image;
 var ImageService = (function () {
     function ImageService(authHttp) {
@@ -30,6 +29,6 @@ var ImageService = (function () {
         __metadata('design:paramtypes', [angular2_jwt_1.AuthHttp])
     ], ImageService);
     return ImageService;
-}());
+})();
 exports.ImageService = ImageService;
 //# sourceMappingURL=image.service.js.map

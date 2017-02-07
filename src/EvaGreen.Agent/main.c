@@ -18,7 +18,7 @@
 #define PACKAGE_DIR "./package"
 
 #define CMSG_CONFIGREQ 0x00
-#define CMSG_PACKAGEUP 0x01
+#define CMSG_UPLOAD 0x01
 
 #define DEF_READ_TYPE(type, file)                                   \
     void read_##type(type *ptr)                                     \
@@ -98,7 +98,7 @@ DEF_SERIALIZER(agent_local_conf, CONF_LOCAL_FILE)
 
 agent_local_conf *load_local_conf()
 {
-    agent_local_conf *local = malloc(sizeof(agent_local_conf));
+    agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
     read_agent_local_conf(local);
     return local;
 }
@@ -131,7 +131,7 @@ int32_t require_snapshot(agent_local_conf *local, agent_remote_conf *remote)
     return time_expired(local->last_snapshot, remote->snapshot_interval);
 }
 
-int32_t file_exists(char *path)
+int32_t file_exists(const char *path)
 {
     return access(path, F_OK) != -1;
 }
@@ -188,15 +188,14 @@ void send_data(int32_t socket, uint8_t opcode, uint8_t *payload, uint32_t payloa
 
     printf("total size: %u\n", size);
 
-    network_header header = {0};
-    header.size = size;
-    header.op = opcode;
+    network_header header = {.size = size, .op = opcode};
 
     uint8_t buffer[size];
     if (payload != NULL)
     {
         memcpy(buffer + sizeof(network_header), payload, payload_length);
     }
+
     send(socket, buffer, size, 0);
 }
 
@@ -207,8 +206,11 @@ void read_data(int32_t socket, void *dst, ssize_t dst_length)
 
 void init_local_conf()
 {
+    if (file_exists(CONF_LOCAL_FILE))
+        return;
+
     printf("initializing local configuration\n");
-    agent_local_conf *local = malloc(sizeof(agent_local_conf));
+    agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
     local->last_upload = 0;
     local->last_snapshot = 0;
     save_agent_local_conf(local);
@@ -216,6 +218,9 @@ void init_local_conf()
 
 void init_remote_conf(int32_t socket)
 {
+    if (file_exists(CONF_REMOTE_FILE))
+        return;
+
     printf("initializing remote configuration\n");
     send_data(socket, CMSG_CONFIGREQ, NULL, 0);
     agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
@@ -232,19 +237,13 @@ void connect_and_execute(void (*callback)(int32_t))
 }
 
 /*
-    First step, check whenever we are booting the app for the first time
+    First step, check whenever we are booting the app for the first time.
     If so, the config should be loaded and a first image should be taken
 */
 int32_t bootstrap_config()
 {
-    if (!file_exists(CONF_REMOTE_FILE))
-    {
-        connect_and_execute(&init_remote_conf);
-    }
-    if (!file_exists(CONF_LOCAL_FILE))
-    {
-        init_local_conf();
-    }
+    connect_and_execute(&init_remote_conf);
+    init_local_conf();
 }
 
 /*
@@ -256,4 +255,4 @@ int32_t main(int argc, char **argv)
 {
     bootstrap_config();
     return 0;
-}
+};

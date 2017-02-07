@@ -1,7 +1,7 @@
 ﻿{
     "compileOnSave": true,
-    "files": [
-        "wwwroot/**/*.ts"
+    "include": [
+        "wwwroot/app/**/*.ts"
     ],
     "compilerOptions": {
         "target": "es5",

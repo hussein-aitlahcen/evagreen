@@ -1,4 +1,3 @@
-"use strict";
 var login_component_1 = require('./evagreen/login/login.component');
 var dashboard_component_1 = require('./evagreen/dashboard/dashboard.component');
 var logged_in_guard_1 = require('./evagreen/shared/logged-in.guard');
