@@ -146,6 +146,7 @@ namespace EvaGreen.Server
                     Console.WriteLine($"Received data: type={type}");
                     switch (type)
                     {
+                        
                         case DataType.Temperature:
                             var value = BitConverter.ToInt32(data, 1);
                             Console.WriteLine($"Received temperature={value}, raw=[{string.Join(", ", data.Skip(1).Select(x => x.ToString("x2")))}]");
