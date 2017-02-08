@@ -20,7 +20,7 @@ var login_component_1 = require('./evagreen/login/login.component');
 var dashboard_component_1 = require('./evagreen/dashboard/dashboard.component');
 var logged_in_guard_1 = require('./evagreen/shared/logged-in.guard');
 var user_service_1 = require('./evagreen/shared/user.service');
-var image_service_1 = require('./evagreen/shared/image.service');
+var data_service_1 = require('./evagreen/shared/data.service');
 require('rxjs/Rx');
 var AppModule = (function () {
     function AppModule(appRef) {
@@ -55,7 +55,7 @@ var AppModule = (function () {
                 }),
                 logged_in_guard_1.LoggedInGuard,
                 user_service_1.UserService,
-                image_service_1.ImageService
+                data_service_1.DataService
             ],
             entryComponents: [
                 main_component_1.AppMain

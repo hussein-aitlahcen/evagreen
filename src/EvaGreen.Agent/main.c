@@ -17,9 +17,6 @@
 #define CONF_LOCAL_FILE "./local.conf.bin"
 #define PACKAGE_DIR "./package"
 
-#define CMSG_CONFIGREQ 0x00
-#define CMSG_UPLOAD 0x01
-
 #define DEF_READ_TYPE(type, file)                                   \
     void read_##type(type *ptr)                                     \
     {                                                               \
@@ -70,6 +67,16 @@
 #define DEF_SERIALIZER(type, file) \
     DEF_READ_TYPE(type, file)      \
     DEF_WRITE_TYPE(type, file)
+
+typedef enum {
+    CMSG_CONFIGREQ = 0x0A,
+    CMSG_UPLOADDATA = 0x0B
+} OpCode;
+
+typedef enum {
+    DATA_PHOTO = 0x01,
+    DATA_TEMPERATURE = 0x02
+} DataType;
 
 typedef struct agent_remote_conf_t
 {
@@ -182,21 +189,24 @@ int32_t connect_socket()
     return sockfd;
 }
 
-void send_data(int32_t socket, uint8_t opcode, uint8_t *payload, uint32_t payload_length)
+void send_data(int32_t socket, OpCode opcode, uint8_t *payload, uint32_t payload_length)
 {
-    uint32_t size = sizeof(network_header) + payload_length;
+    uint32_t total_size = sizeof(network_header) + payload_length;
 
-    printf("total size: %u\n", size);
+    printf("total size: %d\n", total_size);
 
-    network_header header = {.size = size, .op = opcode};
+    network_header header = {.size = payload_length, .op = opcode};
 
-    uint8_t buffer[size];
+    uint8_t buffer[total_size];
+
+    memcpy(buffer, header, sizeof(network_header));
+
     if (payload != NULL)
     {
         memcpy(buffer + sizeof(network_header), payload, payload_length);
     }
 
-    send(socket, buffer, size, 0);
+    send(socket, buffer, total_size, 0);
 }
 
 void read_data(int32_t socket, void *dst, ssize_t dst_length)
@@ -208,8 +218,7 @@ void init_local_conf()
 {
     if (file_exists(CONF_LOCAL_FILE))
         return;
-
-    printf("initializing local configuration\n");
+    printf("initializing local configuration.\n");
     agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
     local->last_upload = 0;
     local->last_snapshot = 0;
@@ -220,20 +229,26 @@ void init_remote_conf(int32_t socket)
 {
     if (file_exists(CONF_REMOTE_FILE))
         return;
-
-    printf("initializing remote configuration\n");
+    printf("initializing remote configuration.\n");
     send_data(socket, CMSG_CONFIGREQ, NULL, 0);
     agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
     read_data(socket, remote, sizeof(agent_remote_conf));
+    printf("remote conf received.\n");
+    printf("upload_interval=%d\n", remote->upload_interval);
+    printf("snapshot_interval=%d\n", remote->snapshot_interval);
+    printf("resolution_w=%d\n", remote->resolution_w);
+    printf("resolution_h=%d\n", remote->resolution_h);
     save_agent_remote_conf(remote);
     free(remote);
 }
 
-void connect_and_execute(void (*callback)(int32_t))
+void send_data_object(int32_t socket, DataType type, uint8_t *data, uint32_t data_length)
 {
-    int32_t socket = connect_socket();
-    callback(socket);
-    close(socket);
+    uint32_t total_length = data_length + sizeof(uint8_t);
+    uint8_t buffer[total_length];
+    buffer[0] = type;
+    memcpy(&buffer + 1, data, data_length);
+    send_data(socket, CMSG_UPLOADDATA, buffer, total_length);
 }
 
 /*
@@ -242,8 +257,14 @@ void connect_and_execute(void (*callback)(int32_t))
 */
 int32_t bootstrap_config()
 {
-    connect_and_execute(&init_remote_conf);
     init_local_conf();
+    int32_t socket = connect_socket();
+    init_remote_conf(socket);
+
+    uint8_t data[4];
+    *((int32_t *)&data) = 15;
+    send_data_object(socket, DATA_TEMPERATURE, data, 4);
+    close(socket);
 }
 
 /*

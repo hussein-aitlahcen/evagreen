@@ -15,10 +15,10 @@ import { DashboardComponent } from './evagreen/dashboard/dashboard.component';
 import { LoggedInGuard } from './evagreen/shared/logged-in.guard';
 
 import { UserService, AUTH_TOKEN_NAME } from './evagreen/shared/user.service';
-import { ImageService } from './evagreen/shared/image.service';
-import 'rxjs/Rx'; 
+import { DataService } from './evagreen/shared/data.service';
+import 'rxjs/Rx';
 
-@NgModule({ 
+@NgModule({
     imports: [
         NgbModule.forRoot(),
         BrowserModule,
@@ -43,7 +43,7 @@ import 'rxjs/Rx';
         }),
         LoggedInGuard,
         UserService,
-        ImageService
+        DataService
     ],
     entryComponents: [
         AppMain
