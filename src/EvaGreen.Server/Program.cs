@@ -5,18 +5,23 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using EvaGreen.Common;
-using SQLite;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.IO;
 
 namespace EvaGreen.Server
 {
     public class Program
     {
+        public const byte CMSG_CONFIGREQ = 0x0A;
+        public const byte CMSG_UPLOADDATA = 0x0B;
+
         public const int PORT = 1337;
-        public const int INPUT_BUFFER_LENGTH = 1024;
+        public const int INPUT_BUFFER_LENGTH = 2048;
 
         public static void Main(string[] args)
         {
+            Log("Initializing TcpServer");
             Run().Wait();
         }
 
@@ -24,9 +29,11 @@ namespace EvaGreen.Server
         {
             var server = new TcpListener(IPAddress.Any, PORT);
             server.Start();
+            Log("TcpServer initialized, starting listenning...");
             while (true)
             {
-                Read(await server.AcceptTcpClientAsync());
+                var client = await server.AcceptTcpClientAsync();
+                await Task.Factory.StartNew(async () => await Read(client));
             }
         }
 
@@ -34,7 +41,7 @@ namespace EvaGreen.Server
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct NetHeader
         {
-            public int DataSize;
+            public uint DataSize;
             public byte Opcode;
         }
 
@@ -47,6 +54,9 @@ namespace EvaGreen.Server
             public uint HeightResolution;
         }
 
+        /*
+            Marshal back given byte array into a structure
+        */
         private static T ByteArrayToStructure<T>(byte[] bytes) where T : struct
         {
             GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
@@ -55,6 +65,9 @@ namespace EvaGreen.Server
             return stuff;
         }
 
+        /*
+            Marshal given struct instance into its byte array representation
+        */
         private static byte[] StructureToByteArray<T>(T obj) where T : struct
         {
             var len = Marshal.SizeOf(obj);
@@ -66,54 +79,51 @@ namespace EvaGreen.Server
             return arr;
         }
 
+        /*
+            Read message comming from the client
+        */
         private async static Task Read(TcpClient client)
         {
-            Console.WriteLine("Client connected.");
-
-            client.SendBufferSize = INPUT_BUFFER_LENGTH;
-            client.ReceiveBufferSize = INPUT_BUFFER_LENGTH;
+            Log("Client connected");
 
             using (var stream = client.GetStream())
             {
+                var headerReceived = false;
                 var packet = new List<byte>();
-                var header = new NetHeader
-                {
-                    DataSize = -1,
-                    Opcode = 0,
-                };
+                var header = new NetHeader();
                 var headerSize = Marshal.SizeOf<NetHeader>();
                 var chunk = new byte[INPUT_BUFFER_LENGTH];
                 var bytesRead = 0;
                 var offset = 0;
                 while ((bytesRead = await stream.ReadAsync(chunk, 0, chunk.Length)) > 0)
                 {
-                    Console.WriteLine($"Received {bytesRead} bytes.");
 
                 again:
-                    if (header.DataSize == -1)
+
+                    // we obviously wait for the header first
+                    if (!headerReceived)
                     {
-                        if (bytesRead - offset < headerSize)
+                        var bytesLeft = bytesRead - offset;
+                        if (bytesLeft < headerSize)
                             continue;
                         header = ByteArrayToStructure<NetHeader>(chunk.Skip(offset).Take(headerSize).ToArray());
                         offset += headerSize;
-
-                        Console.WriteLine($"Header: size={header.DataSize}, opcode={header.Opcode}");
+                        headerReceived = true;
+                        Log($"Header: size={header.DataSize}, opcode={header.Opcode}");
                     }
 
+                    // read the rest as packet data
                     while (offset < bytesRead && packet.Count < header.DataSize)
                     {
                         packet.Add(chunk[offset++]);
                     }
 
+                    // if we fully received the payload, process the packet
                     if (packet.Count >= header.DataSize - headerSize)
                     {
                         await Process(stream, header, packet.ToArray());
                         packet.Clear();
-                        header = new NetHeader
-                        {
-                            DataSize = -1,
-                            Opcode = 0,
-                        };
+                        headerReceived = false;
                         goto again;
                     }
 
@@ -121,16 +131,30 @@ namespace EvaGreen.Server
                 }
             }
 
-            Console.WriteLine("Client disconnected.");
+            client.Dispose();
+
+            Log("Client disconnected");
+        }
+        public static DateTime FromUnixTime(long unixTime)
+        {
+            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return epoch.AddSeconds(unixTime);
+        }
+
+        public static long ToUnixTime(DateTime date)
+        {
+            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return Convert.ToInt64((date - epoch).TotalSeconds);
         }
 
         private static async Task Process(NetworkStream output, NetHeader header, byte[] data)
         {
-            Console.WriteLine($"Processing: opcode={header.Opcode}, real size={data.Length}.");
+            Log($"Processing: opcode={header.Opcode}");
 
             switch (header.Opcode)
             {
-                case 0x0A:
+                case CMSG_CONFIGREQ:
+                    Log("Retrieving RemoteConfiguration");
                     var structure = StructureToByteArray(new RemoteConfiguration
                     {
                         UploadInterval = 3600 * 6,
@@ -141,19 +165,55 @@ namespace EvaGreen.Server
                     await output.WriteAsync(structure, 0, structure.Length);
                     break;
 
-                case 0x0B:
-                    var type = (DataType)data[0];
-                    Console.WriteLine($"Received data: type={type}");
-                    switch (type)
+                case CMSG_UPLOADDATA:
+                    using (var connection = new DataConnection())
                     {
-                        
-                        case DataType.Temperature:
-                            var value = BitConverter.ToInt32(data, 1);
-                            Console.WriteLine($"Received temperature={value}, raw=[{string.Join(", ", data.Skip(1).Select(x => x.ToString("x2")))}]");
-                            break;
+                        connection.Insert(CreateDataFromRaw((DataType)data[0], data));
                     }
                     break;
             }
+        }
+
+        private static Data CreateDataFromRaw(DataType type, byte[] data)
+        {
+            switch (type)
+            {
+                case DataType.Image:
+                    var offset = 1;
+                    var fileNameLength = BitConverter.ToUInt32(data, offset);
+                    offset += sizeof(uint);
+                    var fileName = Encoding.UTF8.GetString(data.Skip(offset).Take((int)fileNameLength).ToArray());
+                    offset += (int)fileNameLength;
+                    var payloadLength = BitConverter.ToUInt32(data, offset);
+                    offset += sizeof(uint);
+                    var payload = data.Skip(offset).ToArray();
+                    offset += (int)payloadLength;
+                    var creationDate = FromUnixTime(BitConverter.ToInt64(data, offset));
+                    Log($"Received image: name={fileName}, creation={creationDate.ToLocalTime().ToString()}, size={payloadLength}");
+                    var filePath = Path.Combine(DataConnection.DB_IMAGES_PATH, fileName);
+                    File.WriteAllBytes(filePath, payload);
+                    return new Data
+                    {
+                        Type = type,
+                        CreationDate = ToUnixTime(creationDate),
+                        IntegrationDate = ToUnixTime(DateTime.Now),
+                        Value = filePath
+                    };
+
+                case DataType.Temperature:
+                    var value = BitConverter.ToInt32(data, 1);
+                    Log($"Received temperature={value}");
+                    throw new NotImplementedException();
+
+                default:
+                    Log("Unknow DataType : " + type);
+                    throw new NotImplementedException();
+            }
+        }
+
+        private static void Log(String message)
+        {
+            Console.WriteLine(message);
         }
     }
 }

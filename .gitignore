@@ -5,6 +5,9 @@
 src/EvaGreen.Central/wwwroot/**/*.js
 src/EvaGreen.Central/wwwroot/**/*.js.map
 
+images/
+log.txt
+
 *.conf.bin
 *.out
 package/*

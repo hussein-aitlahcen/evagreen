@@ -8,11 +8,14 @@ namespace EvaGreen.Common
     {
         public static string DB_DIR = Path.Combine(Environment.GetEnvironmentVariable("HOME"), ".evagreen/");
         public static string DB_PATH = Path.Combine(DB_DIR, "data.db");
+        public static string DB_IMAGES_PATH = Path.Combine(DB_DIR, "images");
 
         static DataConnection()
         {
             if (!Directory.Exists(DB_DIR))
                 Directory.CreateDirectory(DB_DIR);
+            if (!Directory.Exists(DB_IMAGES_PATH))
+                Directory.CreateDirectory(DB_IMAGES_PATH);
         }
 
         public TableQuery<Data> Table => Table<Data>();
