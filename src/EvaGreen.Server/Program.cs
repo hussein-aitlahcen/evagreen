@@ -8,6 +8,7 @@ using EvaGreen.Common;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
+using EvaGreen.Server.Type;
 
 namespace EvaGreen.Server
 {
@@ -37,72 +38,6 @@ namespace EvaGreen.Server
             }
         }
 
-
-        /*
-            Network message header
-        */
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct NetHeader
-        {
-            public uint DataSize;
-            public byte Opcode;
-        }
-
-        /*
-            Remote configuration structure
-        */
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct RemoteConfiguration
-        {
-            public long UploadInterval;
-            public long SnapshotInterval;
-            public uint WidthResolution;
-            public uint HeightResolution;
-        }
-
-        /*
-            Marshal back given byte array into a structure
-        */
-        private static T ByteArrayToStructure<T>(byte[] bytes) where T : struct
-        {
-            GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
-            T stuff = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
-            handle.Free();
-            return stuff;
-        }
-
-        /*
-            Marshal given struct instance into its byte array representation
-        */
-        private static byte[] StructureToByteArray<T>(T obj) where T : struct
-        {
-            var len = Marshal.SizeOf(obj);
-            byte[] arr = new byte[len];
-            IntPtr ptr = Marshal.AllocHGlobal(len);
-            Marshal.StructureToPtr(obj, ptr, true);
-            Marshal.Copy(ptr, arr, 0, len);
-            Marshal.FreeHGlobal(ptr);
-            return arr;
-        }
-
-        /*
-            Transform a unix timestamp into a .net date
-         */
-        public static DateTime FromUnixTime(long unixTime)
-        {
-            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            return epoch.AddSeconds(unixTime);
-        }
-
-        /*
-            Transform a .net date into a unix timestamp 
-         */
-        public static long ToUnixTime(DateTime date)
-        {
-            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            return Convert.ToInt64((date - epoch).TotalSeconds);
-        }
-
         /*
             Read message comming from the client
         */
@@ -130,7 +65,11 @@ namespace EvaGreen.Server
                         var bytesLeft = bytesRead - offset;
                         if (bytesLeft < headerSize)
                             continue;
-                        header = ByteArrayToStructure<NetHeader>(chunk.Skip(offset).Take(headerSize).ToArray());
+                        header = chunk
+                                    .Skip(offset)
+                                    .Take(headerSize)
+                                    .ToArray()
+                                    .ToStructure<NetHeader>();
                         offset += headerSize;
                         headerReceived = true;
                         Log($"Header: size={header.DataSize}, opcode={header.Opcode}");
@@ -143,7 +82,7 @@ namespace EvaGreen.Server
                     }
 
                     // if we fully received the payload, process the packet
-                    if (packet.Count >= header.DataSize - headerSize)
+                    if (packet.Count == header.DataSize)
                     {
                         await Process(stream, header, packet.ToArray());
                         packet.Clear();
@@ -164,26 +103,23 @@ namespace EvaGreen.Server
         {
             Log($"Processing: opcode={header.Opcode}");
 
-            switch (header.Opcode)
+            using (var con = new DataConnection())
             {
-                case CMSG_CONFIGREQ:
-                    Log("Retrieving RemoteConfiguration");
-                    var structure = StructureToByteArray(new RemoteConfiguration
-                    {
-                        UploadInterval = 3600 * 6,
-                        SnapshotInterval = 1800,
-                        WidthResolution = 1024,
-                        HeightResolution = 1024
-                    });
-                    await output.WriteAsync(structure, 0, structure.Length);
-                    break;
+                switch (header.Opcode)
+                {
+                    case CMSG_CONFIGREQ:
+                        Log("Retrieving RemoteConfiguration");
+                        var structure = new NetRemoteConfiguration
+                        (
+                            con.CreateDefaultAgentConfiguration()
+                        ).ToByteArray();
+                        await output.WriteAsync(structure, 0, structure.Length);
+                        break;
 
-                case CMSG_UPLOADDATA:
-                    using (var connection = new DataConnection())
-                    {
-                        connection.Insert(CreateDataFromRaw(data));
-                    }
-                    break;
+                    case CMSG_UPLOADDATA:
+                        con.Insert(CreateDataFromRaw(data));
+                        break;
+                }
             }
         }
 
@@ -191,7 +127,9 @@ namespace EvaGreen.Server
         {
             using (var reader = new BinaryReader(new MemoryStream(data)))
             {
+                var agentId = reader.ReadInt32();
                 var type = (DataType)reader.ReadByte();
+                Log($"Data comming from agentId={agentId}, type={type}");
                 switch (type)
                 {
                     case DataType.Image:
@@ -199,16 +137,17 @@ namespace EvaGreen.Server
                         var fileName = Encoding.UTF8.GetString(reader.ReadBytes(fileNameLength).ToArray());
                         var payloadLength = reader.ReadInt32();
                         var payload = reader.ReadBytes(payloadLength);
-                        var creationDate = FromUnixTime(reader.ReadInt64());
+                        var creationDate = reader.ReadInt64().ToDateTime();
                         var uniqueFileName = string.Format("{0}{1}", Guid.NewGuid().ToString(), Path.GetExtension(fileName));
                         var filePath = Path.Combine(DataConnection.DB_IMAGES_PATH, uniqueFileName);
                         File.WriteAllBytes(filePath, payload);
                         Log($"Received image: name={fileName}, id={uniqueFileName}, creation={creationDate.ToLocalTime().ToString()}, size={payloadLength}");
                         return new Data
                         {
+                            AgentId = agentId,
                             Type = type,
-                            CreationDate = ToUnixTime(creationDate),
-                            IntegrationDate = ToUnixTime(DateTime.Now),
+                            CreationDate = creationDate.ToUnixTime(),
+                            IntegrationDate = DateTime.Now.ToUnixTime(),
                             Value = uniqueFileName,
                             Description = fileName
                         };
@@ -216,7 +155,15 @@ namespace EvaGreen.Server
                     case DataType.Temperature:
                         var value = reader.ReadInt32();
                         Log($"Received temperature={value}");
-                        throw new NotImplementedException();
+                        return new Data
+                        {
+                            AgentId = agentId,
+                            Type = type,
+                            CreationDate = DateTime.Now.ToUnixTime(),
+                            IntegrationDate = DateTime.Now.ToUnixTime(),
+                            Value = value.ToString(),
+                            Description = "Celcius"
+                        };
 
                     default:
                         Log("Unknow DataType : " + type);

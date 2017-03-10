@@ -18,11 +18,20 @@ namespace EvaGreen.Common
                 Directory.CreateDirectory(DB_IMAGES_PATH);
         }
 
-        public TableQuery<Data> Table => Table<Data>();
+        public TableQuery<Data> Data => Table<Data>();
+        public TableQuery<AgentConfiguration> AgentConfiguration => Table<AgentConfiguration>();
 
         public DataConnection() : base(DB_PATH)
         {
             CreateTable<Data>();
+            CreateTable<AgentConfiguration>();
+        }
+
+        public AgentConfiguration CreateDefaultAgentConfiguration()
+        {
+            var agentConf = new AgentConfiguration();
+            Insert(agentConf);
+            return agentConf;
         }
     }
 }

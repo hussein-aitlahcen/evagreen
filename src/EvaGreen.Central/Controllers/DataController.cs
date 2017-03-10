@@ -14,7 +14,7 @@ namespace EvaGreen.Central.Controllers
         {
             using (var con = new DataConnection())
             {
-                return Json(con.Table.ToList());
+                return Json(con.Data.ToList());
             }
         }
     }

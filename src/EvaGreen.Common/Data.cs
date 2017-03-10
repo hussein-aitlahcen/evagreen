@@ -4,9 +4,7 @@ namespace EvaGreen.Common
 {
     public sealed class Data
     {
-
-        [AutoIncrement, PrimaryKey]
-        public int Id { get; set; }
+        public int AgentId { get; set; }
 
         public DataType Type { get; set; }
 

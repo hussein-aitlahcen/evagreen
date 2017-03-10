@@ -44,7 +44,6 @@
             exit(1);                                                \
         }                                                           \
         fclose(rfptr);                                              \
-        exit(1);                                                    \
     }
 
 #define DEF_WRITE_TYPE(type, file)                                   \
@@ -66,7 +65,6 @@
             exit(1);                                                 \
         }                                                            \
         fclose(wfptr);                                               \
-        exit(1);                                                     \
     }
 
 #define DEF_SERIALIZER(type, file) \
@@ -83,13 +81,25 @@ typedef enum e_data_type {
     DATA_TEMPERATURE = 0x02
 } DataType;
 
+#pragma pack(push, 1)
+typedef struct network_header_t
+{
+    int32_t size;
+    uint8_t op;
+} network_header;
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 typedef struct agent_remote_conf_t
 {
+    int32_t agent_id;
     time_t upload_interval;
     time_t snapshot_interval;
-    uint32_t resolution_w;
-    uint32_t resolution_h;
+    int32_t resolution_w;
+    int32_t resolution_h;
+    uint8_t initial_contact;
 } agent_remote_conf;
+#pragma pack(pop)
 
 typedef struct agent_local_conf_t
 {
@@ -97,24 +107,19 @@ typedef struct agent_local_conf_t
     time_t last_snapshot;
 } agent_local_conf;
 
-#pragma pack(push, 1)
-typedef struct network_header_t
-{
-    uint32_t size;
-    uint8_t op;
-} network_header;
-#pragma pack(pop)
-
 typedef struct file_content_t
 {
     char *path;
     int64_t last_modified;
-    uint32_t size;
-    int8_t *payload;
+    int32_t size;
+    uint8_t *payload;
 } file_content;
 
 DEF_SERIALIZER(agent_remote_conf, CONF_REMOTE_FILE)
 DEF_SERIALIZER(agent_local_conf, CONF_LOCAL_FILE)
+
+agent_remote_conf *r_conf;
+agent_local_conf *l_conf;
 
 void log(const char *format, ...)
 {
@@ -148,7 +153,7 @@ file_content *read_file(char *path)
     fseek(f, 0, SEEK_END);
     fcontent->size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    fcontent->payload = (int8_t *)malloc(fcontent->size);
+    fcontent->payload = (uint8_t *)malloc(fcontent->size);
     fread(fcontent->payload, fcontent->size, 1, f);
     fclose(f);
 
@@ -210,6 +215,12 @@ void init_network()
     network_initialized = 1;
 }
 
+void close_socket(int32_t socket)
+{
+    log("shutting down network\n");
+    close(socket);
+}
+
 int32_t connect_socket()
 {
     init_network();
@@ -247,36 +258,54 @@ int32_t connect_socket()
 
 void read_data(int32_t socket, void *dst, ssize_t dst_length)
 {
-    recv(socket, dst, dst_length, 0);
-}
-
-void send_data(int32_t socket, OpCode opcode, uint8_t *payload, uint32_t payload_length)
-{
-    uint32_t total_size = sizeof(network_header) + payload_length;
-    network_header header = {.size = payload_length, .op = opcode};
-    uint8_t buffer[total_size];
-    memcpy(buffer, &header, sizeof(network_header));
-    if (payload != NULL)
+    size_t r = 0;
+    do
     {
-        memcpy(buffer + sizeof(network_header), payload, payload_length);
-    }
-    send(socket, buffer, total_size, 0);
+        r += read(socket, dst + r, dst_length - r);
+    } while (r != dst_length);
 }
 
-void send_data_object(int32_t socket, DataType type, uint8_t *data, uint32_t data_length)
+void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_length)
 {
-    uint32_t total_length = sizeof(uint8_t) + data_length;
-    uint8_t buffer[total_length];
-    buffer[0] = type;
-    memcpy(&buffer[1], data, data_length);
+    // network_header = [i4_size i1_opcode]
+    // [network_header  payload]
+    int32_t total_size = sizeof(network_header) + payload_length;
+    network_header header =
+        {
+            .size = payload_length,
+            .op = opcode,
+        };
+    int8_t buffer[total_size];
+    memcpy(buffer, &header, sizeof(network_header));
+    if (payload_length > 0)
+    {
+        memcpy(&buffer[sizeof(network_header)], payload, payload_length);
+    }
+    size_t sent = 0;
+    do
+    {
+        sent += write(socket, &buffer[sent], total_size - sent);
+    } while (sent != total_size);
+}
+
+void send_data_object(int32_t socket, DataType type, int8_t *data, uint32_t data_length)
+{
+    int32_t total_length = sizeof(int32_t) + sizeof(uint8_t) + data_length;
+    int8_t buffer[total_length];
+
+    // [agent_id        e_data_type         data]
+    memcpy(&buffer, &r_conf->agent_id, sizeof(int32_t));
+    buffer[4] = type;
+    memcpy(&buffer[5], data, data_length);
     send_data(socket, CMSG_UPLOADDATA, buffer, total_length);
 }
 
 void send_data_temperature(int32_t socket, int32_t temperature)
 {
-    uint8_t data[4];
-    *((int32_t *)&data) = temperature;
-    send_data_object(socket, DATA_TEMPERATURE, data, sizeof(int32_t));
+    log("sending temperature\n");
+    int8_t data[sizeof(int32_t)];
+    memcpy(&data, &temperature, sizeof(int32_t));
+    send_data_object(socket, DATA_TEMPERATURE, data, sizeof(data));
 }
 
 void send_data_image(int32_t socket, file_content *image)
@@ -285,9 +314,12 @@ void send_data_image(int32_t socket, file_content *image)
         data buffer = [file_name_length       file_name       payload_length      payload]
     */
     char *file_name = basename(image->path);
+
+    log("sending image: %s\n", file_name);
+
     int32_t file_name_length = strlen(file_name);
     int32_t data_length = sizeof(int32_t) + file_name_length + sizeof(int32_t) + image->size + sizeof(int64_t);
-    uint8_t data[data_length];
+    int8_t data[data_length];
     uint32_t offset = 0;
     memcpy(&data, &file_name_length, sizeof(int32_t));
     offset += sizeof(int32_t);
@@ -314,7 +346,7 @@ void send_images(int32_t socket)
                 char path[256] = IMAGE_DIRECTORY;
                 char *image_path = strcat(path, ent->d_name);
                 file_content *image_content = read_file(image_path);
-                printf("name=%s, size=%d\n", image_path, image_content->size);
+                printf("image name=%s, size=%d\n", image_path, image_content->size);
                 send_data_image(socket, image_content);
                 free(image_content->payload);
                 free(image_content);
@@ -350,29 +382,32 @@ void init_remote_conf(int32_t socket)
     send_data(socket, CMSG_CONFIGREQ, NULL, 0);
     agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
     read_data(socket, remote, sizeof(agent_remote_conf));
-    log("remote conf received.\n");
-    log("upload_interval=%d\n", remote->upload_interval);
-    log("snapshot_interval=%d\n", remote->snapshot_interval);
-    log("resolution_w=%d\n", remote->resolution_w);
-    log("resolution_h=%d\n", remote->resolution_h);
+    log("remote configuration received.\n");
+    printf("agent_id=%d\n", remote->agent_id);
     save_agent_remote_conf(remote);
     free(remote);
 }
 
 /*
     First step, check whenever we are booting the app for the first time.
-    If so, the config should be loaded and a first image should be taken
+    If so, the config should be loaded.
 */
-int32_t bootstrap_config()
+void bootstrap_config(int32_t socket)
 {
     init_local_conf();
-    int32_t socket = connect_socket();
-
     init_remote_conf(socket);
+    l_conf = load_local_conf();
+    r_conf = load_remote_conf();
+}
 
+/*
+
+*/
+void process_logic(int32_t socket)
+{
+    //send_data_temperature(socket, 12);
+    //send_data_temperature(socket, 9);
     send_images(socket);
-
-    close(socket);
 }
 
 /*
@@ -382,6 +417,9 @@ int32_t bootstrap_config()
 */
 int32_t main(int argc, char **argv)
 {
-    bootstrap_config();
+    int32_t socket = connect_socket();
+    bootstrap_config(socket);
+    process_logic(socket);
+    close_socket(socket);
     return 0;
 };

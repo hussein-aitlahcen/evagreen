@@ -5,8 +5,7 @@
         "emitEntryPoint": true
     },
     "dependencies": {
-        "EvaGreen.Common": "*",
-        "sqlite-net-pcl": "*"
+        "EvaGreen.Common": "*"
     },
     "frameworks": {
         "netcoreapp1.0": {
