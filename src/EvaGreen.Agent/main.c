@@ -105,11 +105,12 @@ typedef struct network_header_t
 } network_header;
 #pragma pack(pop)
 
-typedef struct file_content_t {
-    char* path;
+typedef struct file_content_t
+{
+    char *path;
     int64_t last_modified;
     uint32_t size;
-    int8_t* payload;
+    int8_t *payload;
 } file_content;
 
 DEF_SERIALIZER(agent_remote_conf, CONF_REMOTE_FILE)
@@ -134,19 +135,20 @@ int str_ends_with(const char *str, const char *suffix)
         return 0;
     size_t lenstr = strlen(str);
     size_t lensuffix = strlen(suffix);
-    if (lensuffix >  lenstr)
+    if (lensuffix > lenstr)
         return 0;
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
-file_content* read_file(char* path) {
-    file_content* fcontent = (file_content*)malloc(sizeof(file_content));
+file_content *read_file(char *path)
+{
+    file_content *fcontent = (file_content *)malloc(sizeof(file_content));
     fcontent->path = path;
     FILE *f = fopen(path, "rb");
     fseek(f, 0, SEEK_END);
     fcontent->size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    fcontent->payload = (int8_t*)malloc(fcontent->size);
+    fcontent->payload = (int8_t *)malloc(fcontent->size);
     fread(fcontent->payload, fcontent->size, 1, f);
     fclose(f);
 
@@ -277,41 +279,41 @@ void send_data_temperature(int32_t socket, int32_t temperature)
     send_data_object(socket, DATA_TEMPERATURE, data, sizeof(int32_t));
 }
 
-void send_data_image(int32_t socket, file_content* image) 
+void send_data_image(int32_t socket, file_content *image)
 {
     /*
         data buffer = [file_name_length       file_name       payload_length      payload]
     */
-    char* file_name = basename(image->path);
-    uint32_t file_name_length = strlen(file_name);
-    uint32_t data_length = sizeof(uint32_t) + file_name_length + sizeof(uint32_t) + image->size + sizeof(int64_t);
+    char *file_name = basename(image->path);
+    int32_t file_name_length = strlen(file_name);
+    int32_t data_length = sizeof(int32_t) + file_name_length + sizeof(int32_t) + image->size + sizeof(int64_t);
     uint8_t data[data_length];
     uint32_t offset = 0;
-    memcpy(&data, &file_name_length, sizeof(uint32_t));
-    offset += sizeof(uint32_t);
+    memcpy(&data, &file_name_length, sizeof(int32_t));
+    offset += sizeof(int32_t);
     memcpy(&data[offset], file_name, file_name_length);
     offset += file_name_length;
-    memcpy(&data[offset], &image->size, sizeof(uint32_t));
-    offset += sizeof(uint32_t);
+    memcpy(&data[offset], &image->size, sizeof(int32_t));
+    offset += sizeof(int32_t);
     memcpy(&data[offset], image->payload, image->size);
     offset += image->size;
     memcpy(&data[offset], &image->last_modified, sizeof(int64_t));
     send_data_object(socket, DATA_IMAGE, data, data_length);
 }
 
-void send_images(int32_t socket) 
+void send_images(int32_t socket)
 {
     DIR *dir;
     struct dirent *ent;
-    if ((dir = opendir(IMAGE_DIRECTORY)) != NULL) 
+    if ((dir = opendir(IMAGE_DIRECTORY)) != NULL)
     {
-        while ((ent = readdir(dir)) != NULL) 
+        while ((ent = readdir(dir)) != NULL)
         {
-            if(str_ends_with(ent->d_name, IMAGE_EXTENSION)) 
+            if (str_ends_with(ent->d_name, IMAGE_EXTENSION))
             {
                 char path[256] = IMAGE_DIRECTORY;
-                char* image_path = strcat(path, ent->d_name);
-                file_content* image_content = read_file(image_path);
+                char *image_path = strcat(path, ent->d_name);
+                file_content *image_content = read_file(image_path);
                 printf("name=%s, size=%d\n", image_path, image_content->size);
                 send_data_image(socket, image_content);
                 free(image_content->payload);
@@ -319,8 +321,8 @@ void send_images(int32_t socket)
             }
         }
         closedir(dir);
-    } 
-    else 
+    }
+    else
     {
         perror("failed to open image directory");
     }

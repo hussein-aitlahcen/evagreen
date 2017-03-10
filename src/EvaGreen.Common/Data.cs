@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
 using SQLite;
 
 namespace EvaGreen.Common
@@ -19,5 +16,8 @@ namespace EvaGreen.Common
 
         [MaxLength(256)]
         public string Value { get; set; }
+
+        [MaxLength(256)]
+        public string Description { get; set; }
     }
 }

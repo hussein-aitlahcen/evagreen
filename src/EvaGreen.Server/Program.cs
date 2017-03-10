@@ -168,46 +168,47 @@ namespace EvaGreen.Server
                 case CMSG_UPLOADDATA:
                     using (var connection = new DataConnection())
                     {
-                        connection.Insert(CreateDataFromRaw((DataType)data[0], data));
+                        connection.Insert(CreateDataFromRaw(data));
                     }
                     break;
             }
         }
 
-        private static Data CreateDataFromRaw(DataType type, byte[] data)
+        private static Data CreateDataFromRaw(byte[] data)
         {
-            switch (type)
+            using (var reader = new BinaryReader(new MemoryStream(data)))
             {
-                case DataType.Image:
-                    var offset = 1;
-                    var fileNameLength = BitConverter.ToUInt32(data, offset);
-                    offset += sizeof(uint);
-                    var fileName = Encoding.UTF8.GetString(data.Skip(offset).Take((int)fileNameLength).ToArray());
-                    offset += (int)fileNameLength;
-                    var payloadLength = BitConverter.ToUInt32(data, offset);
-                    offset += sizeof(uint);
-                    var payload = data.Skip(offset).ToArray();
-                    offset += (int)payloadLength;
-                    var creationDate = FromUnixTime(BitConverter.ToInt64(data, offset));
-                    Log($"Received image: name={fileName}, creation={creationDate.ToLocalTime().ToString()}, size={payloadLength}");
-                    var filePath = Path.Combine(DataConnection.DB_IMAGES_PATH, fileName);
-                    File.WriteAllBytes(filePath, payload);
-                    return new Data
-                    {
-                        Type = type,
-                        CreationDate = ToUnixTime(creationDate),
-                        IntegrationDate = ToUnixTime(DateTime.Now),
-                        Value = filePath
-                    };
+                var type = (DataType)reader.ReadByte();
+                switch (type)
+                {
+                    case DataType.Image:
+                        var fileNameLength = reader.ReadInt32();
+                        var fileName = Encoding.UTF8.GetString(reader.ReadBytes(fileNameLength).ToArray());
+                        var payloadLength = reader.ReadInt32();
+                        var payload = reader.ReadBytes(payloadLength);
+                        var creationDate = FromUnixTime(reader.ReadInt64());
+                        var uniqueFileName = Guid.NewGuid().ToString();
+                        var filePath = Path.Combine(DataConnection.DB_IMAGES_PATH, uniqueFileName);
+                        File.WriteAllBytes(filePath, payload);
+                        Log($"Received image: name={fileName}, id={uniqueFileName}, creation={creationDate.ToLocalTime().ToString()}, size={payloadLength}");
+                        return new Data
+                        {
+                            Type = type,
+                            CreationDate = ToUnixTime(creationDate),
+                            IntegrationDate = ToUnixTime(DateTime.Now),
+                            Value = uniqueFileName,
+                            Description = fileName
+                        };
 
-                case DataType.Temperature:
-                    var value = BitConverter.ToInt32(data, 1);
-                    Log($"Received temperature={value}");
-                    throw new NotImplementedException();
+                    case DataType.Temperature:
+                        var value = reader.ReadInt32();
+                        Log($"Received temperature={value}");
+                        throw new NotImplementedException();
 
-                default:
-                    Log("Unknow DataType : " + type);
-                    throw new NotImplementedException();
+                    default:
+                        Log("Unknow DataType : " + type);
+                        throw new NotImplementedException();
+                }
             }
         }
 
