@@ -38,6 +38,9 @@ namespace EvaGreen.Server
         }
 
 
+        /*
+            Network message header
+        */
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct NetHeader
         {
@@ -45,6 +48,9 @@ namespace EvaGreen.Server
             public byte Opcode;
         }
 
+        /*
+            Remote configuration structure
+        */
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct RemoteConfiguration
         {
@@ -77,6 +83,24 @@ namespace EvaGreen.Server
             Marshal.Copy(ptr, arr, 0, len);
             Marshal.FreeHGlobal(ptr);
             return arr;
+        }
+
+        /*
+            Transform a unix timestamp into a .net date
+         */
+        public static DateTime FromUnixTime(long unixTime)
+        {
+            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return epoch.AddSeconds(unixTime);
+        }
+
+        /*
+            Transform a .net date into a unix timestamp 
+         */
+        public static long ToUnixTime(DateTime date)
+        {
+            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return Convert.ToInt64((date - epoch).TotalSeconds);
         }
 
         /*
@@ -134,17 +158,6 @@ namespace EvaGreen.Server
             client.Dispose();
 
             Log("Client disconnected");
-        }
-        public static DateTime FromUnixTime(long unixTime)
-        {
-            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            return epoch.AddSeconds(unixTime);
-        }
-
-        public static long ToUnixTime(DateTime date)
-        {
-            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            return Convert.ToInt64((date - epoch).TotalSeconds);
         }
 
         private static async Task Process(NetworkStream output, NetHeader header, byte[] data)
