@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using EvaGreen.Central.Middlewares.Token;
+using EvaGreen.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -55,6 +56,15 @@ namespace EvaGreen.Central
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(env.WebRootPath, "../node_modules")),
                 RequestPath = new PathString("/node_modules")
+            });
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(DataConnection.DB_IMAGES_PATH),
+                RequestPath = new PathString("/data/images"),
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=600");
+                }
             });
 
             var secretKey = "gd5894era:$^^!a&klcSDF98A621!&'/7415";

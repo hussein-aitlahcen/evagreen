@@ -200,7 +200,7 @@ namespace EvaGreen.Server
                         var payloadLength = reader.ReadInt32();
                         var payload = reader.ReadBytes(payloadLength);
                         var creationDate = FromUnixTime(reader.ReadInt64());
-                        var uniqueFileName = Guid.NewGuid().ToString();
+                        var uniqueFileName = string.Format("{0}{1}", Guid.NewGuid().ToString(), Path.GetExtension(fileName));
                         var filePath = Path.Combine(DataConnection.DB_IMAGES_PATH, uniqueFileName);
                         File.WriteAllBytes(filePath, payload);
                         Log($"Received image: name={fileName}, id={uniqueFileName}, creation={creationDate.ToLocalTime().ToString()}, size={payloadLength}");

@@ -25,11 +25,11 @@ export class DashboardComponent {
             this.router.navigate(['/login']);
         }
         else {
-            this.loadImages();
+            this.loadDatas();
         }
     }
 
-    loadImages() {
+    loadDatas() {
         this.loading = true;
         this.dataService.all()
             .subscribe(result => {

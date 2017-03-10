@@ -3,7 +3,13 @@ import { AuthHttp } from 'angular2-jwt';
 import { Observable } from 'rxjs/Observable';
 
 export class Data {
-    constructor(public id: Number) { }
+    constructor(public id: Number,
+        public type: Number,
+        public creationDate: Number,
+        public integrationDate: Number,
+        public value: String,
+        public description: String) {
+    }
 }
 
 @Injectable()
