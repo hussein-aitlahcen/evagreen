@@ -13,94 +13,9 @@
 #include <stdarg.h>
 #include <dirent.h>
 
-#define AGENT_ID 1
-#define IMAGE_DIRECTORY "./images/"
-#define IMAGE_EXTENSION ".png"
-#define SERVER_HOST "127.0.0.1"
-#define SERVER_PORT 1337
-
-#define CONF_REMOTE_FILE "./remote.conf.bin"
-#define CONF_LOCAL_FILE "./local.conf.bin"
-#define PACKAGE_DIR "./package"
-
-#define DEF_READ_TYPE(type, file)                                   \
-    void read_##type(type *ptr)                                     \
-    {                                                               \
-        FILE *rfptr = NULL;                                         \
-        if ((rfptr = fopen(file, "rb")) != NULL)                    \
-        {                                                           \
-            if (fread(ptr, 1, sizeof(type), rfptr) != sizeof(type)) \
-            {                                                       \
-                if (!feof(rfptr))                                   \
-                {                                                   \
-                    fprintf(stderr, "error: reading file\n");       \
-                    fclose(rfptr);                                  \
-                    exit(1);                                        \
-                }                                                   \
-            }                                                       \
-        }                                                           \
-        else                                                        \
-        {                                                           \
-            fprintf(stderr, "error: opening file for reading\n");   \
-            exit(1);                                                \
-        }                                                           \
-        fclose(rfptr);                                              \
-    }
-
-#define DEF_WRITE_TYPE(type, file)                                   \
-    void save_##type(type *ptr)                                      \
-    {                                                                \
-        FILE *wfptr = NULL;                                          \
-        if ((wfptr = fopen(file, "wb")) != NULL)                     \
-        {                                                            \
-            if (fwrite(ptr, 1, sizeof(type), wfptr) != sizeof(type)) \
-            {                                                        \
-                fprintf(stderr, "error: saving file\n");             \
-                fclose(wfptr);                                       \
-                exit(1);                                             \
-            }                                                        \
-        }                                                            \
-        else                                                         \
-        {                                                            \
-            fprintf(stderr, "error: opening file for writing\n");    \
-            exit(1);                                                 \
-        }                                                            \
-        fclose(wfptr);                                               \
-    }
-
-#define DEF_SERIALIZER(type, file) \
-    DEF_READ_TYPE(type, file)      \
-    DEF_WRITE_TYPE(type, file)
-
-typedef enum e_cmsg_opcode {
-    CMSG_CONFIGREQ = 0x0A,
-    CMSG_UPLOADDATA = 0x0B
-} OpCode;
-
-typedef enum e_data_type {
-    DATA_IMAGE = 0x01,
-    DATA_TEMPERATURE = 0x02
-} DataType;
-
-#pragma pack(push, 1)
-typedef struct network_header_t
-{
-    int32_t data_size;
-    uint8_t op_code;
-    int32_t agent_id;
-} network_header;
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-typedef struct agent_remote_conf_t
-{
-    time_t upload_interval;
-    time_t snapshot_interval;
-    int32_t resolution_w;
-    int32_t resolution_h;
-    uint8_t initial_contact;
-} agent_remote_conf;
-#pragma pack(pop)
+#include "net.h"
+#include "var.h"
+#include "misc.h"
 
 typedef struct agent_local_conf_t
 {
@@ -108,62 +23,12 @@ typedef struct agent_local_conf_t
     time_t last_snapshot;
 } agent_local_conf;
 
-typedef struct file_content_t
-{
-    char *path;
-    int64_t last_modified;
-    int32_t size;
-    uint8_t *payload;
-} file_content;
 
 DEF_SERIALIZER(agent_remote_conf, CONF_REMOTE_FILE)
 DEF_SERIALIZER(agent_local_conf, CONF_LOCAL_FILE)
 
 agent_remote_conf *r_conf;
 agent_local_conf *l_conf;
-
-void log(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    FILE *f = fopen("log.txt", "a+");
-    if (f != NULL)
-    {
-        vfprintf(f, format, args);
-    }
-    vprintf(format, args);
-    va_end(args);
-}
-
-int str_ends_with(const char *str, const char *suffix)
-{
-    if (!str || !suffix)
-        return 0;
-    size_t lenstr = strlen(str);
-    size_t lensuffix = strlen(suffix);
-    if (lensuffix > lenstr)
-        return 0;
-    return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
-}
-
-file_content *read_file(char *path)
-{
-    file_content *fcontent = (file_content *)malloc(sizeof(file_content));
-    fcontent->path = path;
-    FILE *f = fopen(path, "rb");
-    fseek(f, 0, SEEK_END);
-    fcontent->size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    fcontent->payload = (uint8_t *)malloc(fcontent->size);
-    fread(fcontent->payload, fcontent->size, 1, f);
-    fclose(f);
-
-    struct stat attr;
-    stat(path, &attr);
-    fcontent->last_modified = attr.st_mtime;
-
-    return fcontent;
-}
 
 agent_local_conf *load_local_conf()
 {
