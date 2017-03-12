@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace EvaGreen.Common
@@ -9,10 +11,11 @@ namespace EvaGreen.Common
         /*
             Marshal back given byte array into a structure
         */
-        public static T ToStructure<T>(this byte[] bytes) where T : struct
+        public static T ToStructure<T>(this IEnumerable<byte> bytes) where T : struct
         {
-            GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
-            T stuff = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+            var arr = bytes.ToArray();
+            var handle = GCHandle.Alloc(arr, GCHandleType.Pinned);
+            var stuff = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
             handle.Free();
             return stuff;
         }
@@ -23,8 +26,8 @@ namespace EvaGreen.Common
         public static byte[] ToByteArray<T>(this T obj) where T : struct
         {
             var len = Marshal.SizeOf(obj);
-            byte[] arr = new byte[len];
-            IntPtr ptr = Marshal.AllocHGlobal(len);
+            var arr = new byte[len];
+            var ptr = Marshal.AllocHGlobal(len);
             Marshal.StructureToPtr(obj, ptr, true);
             Marshal.Copy(ptr, arr, 0, len);
             Marshal.FreeHGlobal(ptr);

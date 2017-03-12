@@ -9,6 +9,6 @@ namespace EvaGreen.Server.Type
     public struct NetHeader
     {
         public int DataSize;
-        public byte Opcode;
+        public byte OpCode;
     }
 }

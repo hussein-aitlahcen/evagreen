@@ -281,6 +281,7 @@ void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_
     {
         memcpy(&buffer[sizeof(network_header)], payload, payload_length);
     }
+    log("sending message: OpCode=%d, Size=%d\n", header.op, header.size);
     size_t sent = 0;
     do
     {
