@@ -1,4 +1,5 @@
-#include <stdlib.h>
+#include <stdint.h>
+#include <time.h>
 
 typedef enum e_cmsg_opcode {
     CMSG_CONFIGREQ = 0x0A,

@@ -1,3 +1,10 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdarg.h>
+#include <string.h>
+#include <sys/stat.h>
+
 #define DEF_READ_TYPE(type, file)                                   \
     void read_##type(type *ptr)                                     \
     {                                                               \

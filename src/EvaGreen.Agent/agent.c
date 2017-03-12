@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,7 +9,6 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <time.h>
-#include <stdarg.h>
 #include <dirent.h>
 
 #include "net.h"
@@ -23,9 +21,8 @@ typedef struct agent_local_conf_t
     time_t last_snapshot;
 } agent_local_conf;
 
-
-DEF_SERIALIZER(agent_remote_conf, CONF_REMOTE_FILE)
-DEF_SERIALIZER(agent_local_conf, CONF_LOCAL_FILE)
+DEF_SERIALIZER(agent_remote_conf, CONF_REMOTE_FILE);
+DEF_SERIALIZER(agent_local_conf, CONF_LOCAL_FILE);
 
 agent_remote_conf *r_conf;
 agent_local_conf *l_conf;
