@@ -1,21 +1,36 @@
 body {
-  font-family: Roboto, 'Helvetica Neue', sans-serif; }
-  body .bg-inverse {
-    background-color: #025aa5 !important; }
-  body .z-layer-1 {
+    font-family: Roboto, 'Helvetica Neue', sans-serif;
+}
+
+body .bg-inverse {
+    background-color: #025aa5 !important;
+}
+
+body .z-layer-1 {
     border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12); }
-  body .z-layer-2 {
+    box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.24), 0 1.5px 6px rgba(0, 0, 0, 0.12);
+}
+
+body .z-layer-2 {
     border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.23), 0 3px 12px rgba(0, 0, 0, 0.16); }
-  body .z-layer-3 {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.23), 0 3px 12px rgba(0, 0, 0, 0.16);
+}
+
+body .z-layer-3 {
     border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.23), 0 10px 40px rgba(0, 0, 0, 0.19); }
-  body .z-layer-4 {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.23), 0 10px 40px rgba(0, 0, 0, 0.19);
+}
+
+body .z-layer-4 {
     border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25); }
-  body .z-layer-5 {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 14px 56px rgba(0, 0, 0, 0.25);
+}
+
+body .z-layer-5 {
     border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3); }
-  body .main {
-    margin-top: 54px; }
+    box-shadow: 0 15px 24px rgba(0, 0, 0, 0.22), 0 19px 76px rgba(0, 0, 0, 0.3);
+}
+
+body .main {
+    margin-top: 54px;
+}

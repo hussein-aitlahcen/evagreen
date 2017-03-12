@@ -29,7 +29,7 @@ export class AgentComponent {
 
     loadDatas() {
         this.loading = true;
-        this.dataService.all()
+        this.dataService.all(this.agent.id)
             .subscribe(result => {
                 this.datas = result;
                 this.loading = false;

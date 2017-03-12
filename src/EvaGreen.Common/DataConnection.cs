@@ -29,12 +29,16 @@ namespace EvaGreen.Common
 
         public AgentConfiguration GetOrCreateAgentConfiguration(int agentId)
         {
-            var agentConf = AgentConfiguration.FirstOrDefault(c => c.AgentId == agentId);
+            var agentConf = AgentConfiguration.FirstOrDefault(c => c.Id == agentId);
             if (agentConf == null)
             {
-                agentConf = new AgentConfiguration();
+                agentConf = new AgentConfiguration
+                {
+                    Id = agentId,
+                    Description = "Aucune description connue à ce jour."
+                };
+                Insert(agentConf);
             }
-            InsertOrReplace(agentConf);
             return agentConf;
         }
     }

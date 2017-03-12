@@ -9,12 +9,12 @@ namespace EvaGreen.Central.Controllers
     [Route("api/[controller]")]
     public sealed class DataController : Controller
     {
-        [HttpGet]
-        public IActionResult Get()
+        [HttpGet("agent/{agentId}")]
+        public IActionResult GetByAgentId(int agentId)
         {
             using (var con = new DataConnection())
             {
-                return Json(con.Data.ToList());
+                return Json(con.Data.Where(d => d.AgentId == agentId).ToList());
             }
         }
     }

@@ -63,7 +63,7 @@ namespace EvaGreen.Central
                 RequestPath = new PathString("/data/images"),
                 OnPrepareResponse = ctx =>
                 {
-                    ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=600");
+                    ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=600");
                 }
             });
 

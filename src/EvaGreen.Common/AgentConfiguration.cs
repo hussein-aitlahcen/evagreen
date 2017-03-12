@@ -15,13 +15,14 @@ namespace EvaGreen.Common
             SnapshotInterval = DEFAULT_SNAPSHOT_INTERVAL;
             WidthResolution = DEFAULT_WIDTH;
             HeightResolution = DEFAULT_HEIGHT;
+            InitialContact = true;
         }
 
         [PrimaryKey]
-        public int AgentId { get; set; }
+        public int Id { get; set; }
 
         [MaxLength(512)]
-        public string AgentDescription { get; set; }
+        public string Description { get; set; }
 
         public long UploadInterval { get; set; }
 

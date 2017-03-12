@@ -16,8 +16,8 @@ export class Data {
 export class DataService {
     constructor(private authHttp: AuthHttp) { }
 
-    all(): Observable<Data[]> {
-        return this.authHttp.get("/api/data")
+    all(agentId: Number): Observable<Data[]> {
+        return this.authHttp.get("/api/data/agent/" + agentId)
             .map(res => res.json());
     }
 }
