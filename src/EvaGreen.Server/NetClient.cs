@@ -31,6 +31,7 @@ namespace EvaGreen.Server
             _state = NetClientState.WaitingHeader;
             _offset = 0;
             _buffer = new byte[INPUT_BUFFER_LENGTH];
+            Log("CLIENT CONNECTED");
         }
 
         public async Task Read()
@@ -100,12 +101,13 @@ namespace EvaGreen.Server
                     }
                 }
 
-                await Task.Factory.StartNew(Read);
+                Task.Factory.StartNew(Read);
             }
             else
             {
                 _client.Dispose();
-                Log("Client disconnected");
+                _buffer = null;
+                Log("CLIENT DISCONNECTED");
             }
         }
 
@@ -115,72 +117,71 @@ namespace EvaGreen.Server
 
             Log($"Processing: OpCode={_header.OpCode}");
 
-            using (var con = new DataConnection())
+            using (var reader = new BinaryReader(new MemoryStream(data)))
             {
-                switch (_header.OpCode)
+                using (var con = new DataConnection())
                 {
-                    case CMSG_CONFIGREQ:
-                        Log("Retrieving RemoteConfiguration");
-                        var structure = new NetRemoteConfiguration
-                        (
-                            con.CreateDefaultAgentConfiguration()
-                        ).ToByteArray();
-                        await output.WriteAsync(structure, 0, structure.Length);
-                        break;
+                    switch (_header.OpCode)
+                    {
+                        case CMSG_CONFIGREQ:
+                            Log("Retrieving RemoteConfiguration");
+                            var structure = new NetRemoteConfiguration
+                            (
+                                con.GetOrCreateAgentConfiguration(_header.AgentId)
+                            ).ToByteArray();
+                            await output.WriteAsync(structure, 0, structure.Length);
+                            break;
 
-                    case CMSG_UPLOADDATA:
-                        con.Insert(CreateDataFromRaw(data));
-                        break;
+                        case CMSG_UPLOADDATA:
+                            con.Insert(CreateDataFromRaw(reader));
+                            break;
+                    }
                 }
             }
         }
 
-        private Data CreateDataFromRaw(byte[] data)
+        private Data CreateDataFromRaw(BinaryReader reader)
         {
-            using (var reader = new BinaryReader(new MemoryStream(data)))
+            var type = (DataType)reader.ReadByte();
+            Log($"Data comming from agentId={_header.AgentId}, type={type}");
+            switch (type)
             {
-                var agentId = reader.ReadInt32();
-                var type = (DataType)reader.ReadByte();
-                Log($"Data comming from agentId={agentId}, type={type}");
-                switch (type)
-                {
-                    case DataType.Image:
-                        var fileNameLength = reader.ReadInt32();
-                        var fileName = Encoding.UTF8.GetString(reader.ReadBytes(fileNameLength).ToArray());
-                        var payloadLength = reader.ReadInt32();
-                        var payload = reader.ReadBytes(payloadLength);
-                        var creationDate = reader.ReadInt64().ToDateTime();
-                        var uniqueFileName = string.Format("{0}{1}", Guid.NewGuid().ToString(), Path.GetExtension(fileName));
-                        var filePath = Path.Combine(DataConnection.DB_IMAGES_PATH, uniqueFileName);
-                        File.WriteAllBytes(filePath, payload);
-                        Log($"Received image: name={fileName}, id={uniqueFileName}, creation={creationDate.ToLocalTime().ToString()}, size={payloadLength}");
-                        return new Data
-                        {
-                            AgentId = agentId,
-                            Type = type,
-                            CreationDate = creationDate.ToUnixTime(),
-                            IntegrationDate = DateTime.Now.ToUnixTime(),
-                            Value = uniqueFileName,
-                            Description = fileName
-                        };
+                case DataType.Image:
+                    var fileNameLength = reader.ReadInt32();
+                    var fileName = Encoding.UTF8.GetString(reader.ReadBytes(fileNameLength).ToArray());
+                    var payloadLength = reader.ReadInt32();
+                    var payload = reader.ReadBytes(payloadLength);
+                    var creationDate = reader.ReadInt64().ToDateTime();
+                    var uniqueFileName = string.Format("{0}{1}", Guid.NewGuid().ToString(), Path.GetExtension(fileName));
+                    var filePath = Path.Combine(DataConnection.DB_IMAGES_PATH, uniqueFileName);
+                    File.WriteAllBytes(filePath, payload);
+                    Log($"Received image: name={fileName}, id={uniqueFileName}, creation={creationDate.ToLocalTime().ToString()}, size={payloadLength}");
+                    return new Data
+                    {
+                        AgentId = _header.AgentId,
+                        Type = type,
+                        CreationDate = creationDate.ToUnixTime(),
+                        IntegrationDate = DateTime.Now.ToUnixTime(),
+                        Value = uniqueFileName,
+                        Description = fileName
+                    };
 
-                    case DataType.Temperature:
-                        var value = reader.ReadInt32();
-                        Log($"Received temperature={value}");
-                        return new Data
-                        {
-                            AgentId = agentId,
-                            Type = type,
-                            CreationDate = DateTime.Now.ToUnixTime(),
-                            IntegrationDate = DateTime.Now.ToUnixTime(),
-                            Value = value.ToString(),
-                            Description = "Celcius"
-                        };
+                case DataType.Temperature:
+                    var value = reader.ReadInt32();
+                    Log($"Received temperature={value}");
+                    return new Data
+                    {
+                        AgentId = _header.AgentId,
+                        Type = type,
+                        CreationDate = DateTime.Now.ToUnixTime(),
+                        IntegrationDate = DateTime.Now.ToUnixTime(),
+                        Value = value.ToString(),
+                        Description = "Celcius"
+                    };
 
-                    default:
-                        Log("Unknow DataType : " + type);
-                        throw new NotImplementedException();
-                }
+                default:
+                    Log("Unknow DataType : " + type);
+                    throw new NotImplementedException();
             }
         }
 

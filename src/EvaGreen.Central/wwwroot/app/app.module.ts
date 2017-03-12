@@ -1,4 +1,6 @@
-﻿import { NgModule, ApplicationRef } from '@angular/core';
+﻿import 'rxjs/Rx';
+
+import { NgModule, ApplicationRef } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpModule } from '@angular/http';
 import { FormsModule } from '@angular/forms';
@@ -11,12 +13,13 @@ import { APP_ROUTES } from './routes';
 import { AppMain } from './evagreen/main.component';
 import { LoginComponent } from './evagreen/login/login.component';
 import { DashboardComponent } from './evagreen/dashboard/dashboard.component';
+import { AgentComponent } from './evagreen/agent/agent.component';
 
 import { LoggedInGuard } from './evagreen/shared/logged-in.guard';
 
 import { UserService, AUTH_TOKEN_NAME } from './evagreen/shared/user.service';
 import { DataService } from './evagreen/shared/data.service';
-import 'rxjs/Rx';
+import { AgentService } from './evagreen/shared/agent.service';
 
 @NgModule({
     imports: [
@@ -29,7 +32,8 @@ import 'rxjs/Rx';
     declarations: [
         AppMain,
         LoginComponent,
-        DashboardComponent
+        DashboardComponent,
+        AgentComponent
     ],
     providers: [
         provideAuth({
@@ -43,7 +47,8 @@ import 'rxjs/Rx';
         }),
         LoggedInGuard,
         UserService,
-        DataService
+        DataService,
+        AgentService
     ],
     entryComponents: [
         AppMain

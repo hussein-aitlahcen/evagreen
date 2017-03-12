@@ -1,23 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { DataService, Data } from '../shared/data.service';
+import { AgentService, Agent } from '../shared/agent.service';
 import { UserService } from '../shared/user.service';
 
 @Component({
     moduleId: module.id,
     selector: 'dashboard',
     templateUrl: 'dashboard.component.html',
-    styleUrls: ['dashboard.component.css']
+    styles: []
 })
 export class DashboardComponent {
 
     loading: boolean;
-    datas: Data[];
+    agents: Agent[];
 
-    constructor(private dataService: DataService, private user: UserService, private router: Router) {
+    constructor(private agentService: AgentService, private user: UserService, private router: Router) {
         this.loading = true;
-        this.datas = [];
+        this.agents = [];
     }
 
     ngOnInit() {
@@ -31,9 +31,9 @@ export class DashboardComponent {
 
     loadDatas() {
         this.loading = true;
-        this.dataService.all()
+        this.agentService.all()
             .subscribe(result => {
-                this.datas = result;
+                this.agents = result;
                 this.loading = false;
             });
     }

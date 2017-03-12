@@ -7,5 +7,5 @@ import { LoggedInGuard } from './evagreen/shared/logged-in.guard';
 export const APP_ROUTES: Routes = [
     { path: '', component: LoginComponent },
     { path: 'login', component: LoginComponent },
-    { path: 'dashboard', component: DashboardComponent, canActivate: [LoggedInGuard]}
+    { path: 'dashboard', component: DashboardComponent }
 ]

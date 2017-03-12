@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <dirent.h>
 
+#define AGENT_ID 1
 #define IMAGE_DIRECTORY "./images/"
 #define IMAGE_EXTENSION ".png"
 #define SERVER_HOST "127.0.0.1"
@@ -84,15 +85,15 @@ typedef enum e_data_type {
 #pragma pack(push, 1)
 typedef struct network_header_t
 {
-    int32_t size;
-    uint8_t op;
+    int32_t data_size;
+    uint8_t op_code;
+    int32_t agent_id;
 } network_header;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
 typedef struct agent_remote_conf_t
 {
-    int32_t agent_id;
     time_t upload_interval;
     time_t snapshot_interval;
     int32_t resolution_w;
@@ -261,7 +262,7 @@ void read_data(int32_t socket, void *dst, ssize_t dst_length)
     size_t r = 0;
     do
     {
-        r += read(socket, dst + r, dst_length - r);
+        r += read(socket, ((int8_t*)dst) + r, dst_length - r);
     } while (r != dst_length);
 }
 
@@ -272,8 +273,9 @@ void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_
     int32_t total_size = sizeof(network_header) + payload_length;
     network_header header =
         {
-            .size = payload_length,
-            .op = opcode,
+            .data_size = payload_length,
+            .op_code = opcode,
+            .agent_id = AGENT_ID,
         };
     int8_t buffer[total_size];
     memcpy(buffer, &header, sizeof(network_header));
@@ -281,7 +283,7 @@ void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_
     {
         memcpy(&buffer[sizeof(network_header)], payload, payload_length);
     }
-    log("sending message: OpCode=%d, Size=%d\n", header.op, header.size);
+    log("sending message: OpCode=%d, Size=%d\n", header.op_code, header.data_size);
     size_t sent = 0;
     do
     {
@@ -291,13 +293,12 @@ void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_
 
 void send_data_object(int32_t socket, DataType type, int8_t *data, uint32_t data_length)
 {
-    int32_t total_length = sizeof(int32_t) + sizeof(uint8_t) + data_length;
+    int32_t total_length = sizeof(uint8_t) + data_length;
     int8_t buffer[total_length];
 
-    // [agent_id        e_data_type         data]
-    memcpy(&buffer, &r_conf->agent_id, sizeof(int32_t));
-    buffer[4] = type;
-    memcpy(&buffer[5], data, data_length);
+    // [e_data_type         data]
+    buffer[0] = type;
+    memcpy(&buffer[1], data, data_length);
     send_data(socket, CMSG_UPLOADDATA, buffer, total_length);
 }
 
@@ -384,7 +385,6 @@ void init_remote_conf(int32_t socket)
     agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
     read_data(socket, remote, sizeof(agent_remote_conf));
     log("remote configuration received.\n");
-    printf("agent_id=%d\n", remote->agent_id);
     save_agent_remote_conf(remote);
     free(remote);
 }

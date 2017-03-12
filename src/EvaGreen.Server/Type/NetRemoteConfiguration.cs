@@ -11,14 +11,12 @@ namespace EvaGreen.Server.Type
     {
         public NetRemoteConfiguration(AgentConfiguration conf)
         {
-            AgentId = conf.AgentId;
             UploadInterval = conf.UploadInterval;
             SnapshotInterval = conf.SnapshotInterval;
             WidthResolution = conf.WidthResolution;
             HeightResolution = conf.HeightResolution;
             InitialContact = conf.InitialContact;
         }
-        public int AgentId;
         public long UploadInterval;
         public long SnapshotInterval;
         public uint WidthResolution;

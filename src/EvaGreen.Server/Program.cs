@@ -22,7 +22,7 @@ namespace EvaGreen.Server
             {
                 var socket = await server.AcceptTcpClientAsync();
                 var client = new NetClient(socket);
-                await Task.Factory.StartNew(client.Read);
+                Task.Factory.StartNew(client.Read);
             }
         }
     }

@@ -17,7 +17,7 @@ namespace EvaGreen.Common
             HeightResolution = DEFAULT_HEIGHT;
         }
 
-        [AutoIncrement, PrimaryKey]
+        [PrimaryKey]
         public int AgentId { get; set; }
 
         [MaxLength(512)]

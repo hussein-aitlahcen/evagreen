@@ -27,10 +27,14 @@ namespace EvaGreen.Common
             CreateTable<AgentConfiguration>();
         }
 
-        public AgentConfiguration CreateDefaultAgentConfiguration()
+        public AgentConfiguration GetOrCreateAgentConfiguration(int agentId)
         {
-            var agentConf = new AgentConfiguration();
-            Insert(agentConf);
+            var agentConf = AgentConfiguration.FirstOrDefault(c => c.AgentId == agentId);
+            if (agentConf == null)
+            {
+                agentConf = new AgentConfiguration();
+            }
+            InsertOrReplace(agentConf);
             return agentConf;
         }
     }

@@ -10,5 +10,6 @@ namespace EvaGreen.Server.Type
     {
         public int DataSize;
         public byte OpCode;
+        public int AgentId;
     }
 }

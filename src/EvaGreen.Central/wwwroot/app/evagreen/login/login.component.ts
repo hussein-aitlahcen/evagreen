@@ -1,4 +1,4 @@
-﻿import { Component} from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { UserService } from '../shared/user.service';
@@ -12,7 +12,11 @@ enum LoginResult {
     moduleId: module.id,
     selector: 'login',
     templateUrl: 'login.component.html',
-    styleUrls: ['login.component.css']
+    styles: [
+        'fieldset { border: 0; text-align: center; max-width: 400px; margin: auto; }',
+        '.form-signin { margin-top: 50px; }',
+        '.form-signin-control { margin-top: 5px; margin-bottom: 5px; }'
+    ]
 })
 export class LoginComponent {
 
@@ -31,7 +35,7 @@ export class LoginComponent {
     ngOnInit() {
         if (this.user.isLoggedIn()) {
             this.router.navigate(['/dashboard']);
-        } 
+        }
     }
 
     login() {
