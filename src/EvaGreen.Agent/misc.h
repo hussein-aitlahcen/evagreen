@@ -51,7 +51,7 @@
     }
 
 #define DEF_SERIALIZER(type, file) \
-    DEF_READ_TYPE(type, file);      \
+    DEF_READ_TYPE(type, file);     \
     DEF_WRITE_TYPE(type, file);
 
 typedef struct file_content_t
@@ -62,7 +62,7 @@ typedef struct file_content_t
     uint8_t *payload;
 } file_content;
 
-void log(const char *format, ...)
+void txtlog(const char *format, ...)
 {
     va_list args;
     va_start(args, format);

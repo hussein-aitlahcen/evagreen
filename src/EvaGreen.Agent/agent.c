@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <time.h>
+#include <libgen.h>
 #include <dirent.h>
 
 #include "net.h"
@@ -73,14 +74,15 @@ void init_network()
     if (network_initialized)
         return;
 
-    log("initializing network\n");
+    txtlog("initializing network\n");
 
     network_initialized = 1;
 }
 
 void close_socket(int32_t socket)
 {
-    log("shutting down network\n");
+    txtlog("shutting down network\n");
+    shutdown(socket, SHUT_RDWR);
     close(socket);
 }
 
@@ -124,7 +126,7 @@ void read_data(int32_t socket, void *dst, ssize_t dst_length)
     size_t r = 0;
     do
     {
-        r += read(socket, ((int8_t*)dst) + r, dst_length - r);
+        r += read(socket, ((int8_t *)dst) + r, dst_length - r);
     } while (r != dst_length);
 }
 
@@ -145,7 +147,7 @@ void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_
     {
         memcpy(&buffer[sizeof(network_header)], payload, payload_length);
     }
-    log("sending message: OpCode=%d, Size=%d\n", header.op_code, header.data_size);
+    txtlog("sending message: OpCode=%d, Size=%d\n", &header.op_code, &header.data_size);
     size_t sent = 0;
     do
     {
@@ -166,7 +168,7 @@ void send_data_object(int32_t socket, DataType type, int8_t *data, uint32_t data
 
 void send_data_temperature(int32_t socket, int32_t temperature)
 {
-    log("sending temperature\n");
+    txtlog("sending temperature\n");
     int8_t data[sizeof(int32_t)];
     memcpy(&data, &temperature, sizeof(int32_t));
     send_data_object(socket, DATA_TEMPERATURE, data, sizeof(data));
@@ -179,7 +181,7 @@ void send_data_image(int32_t socket, file_content *image)
     */
     char *file_name = basename(image->path);
 
-    log("sending image: %s\n", file_name);
+    txtlog("sending image\n", file_name);
 
     int32_t file_name_length = strlen(file_name);
     int32_t data_length = sizeof(int32_t) + file_name_length + sizeof(int32_t) + image->size + sizeof(int64_t);
@@ -228,7 +230,7 @@ void init_local_conf()
 {
     if (file_exists(CONF_LOCAL_FILE))
         return;
-    log("initializing local configuration\n");
+    txtlog("initializing local configuration\n");
     agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
     local->last_upload = 0;
     local->last_snapshot = 0;
@@ -242,11 +244,11 @@ void init_remote_conf(int32_t socket)
 {
     if (file_exists(CONF_REMOTE_FILE))
         return;
-    log("initializing remote configuration\n");
+    txtlog("initializing remote configuration\n");
     send_data(socket, CMSG_CONFIGREQ, NULL, 0);
     agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
     read_data(socket, remote, sizeof(agent_remote_conf));
-    log("remote configuration received.\n");
+    txtlog("remote configuration received.\n");
     save_agent_remote_conf(remote);
     free(remote);
 }
