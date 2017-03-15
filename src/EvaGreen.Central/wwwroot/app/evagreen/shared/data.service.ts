@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 
 export class Data {
     constructor(public id: Number,
+        public agentId: Number,
         public type: Number,
         public creationDate: Number,
         public integrationDate: Number,

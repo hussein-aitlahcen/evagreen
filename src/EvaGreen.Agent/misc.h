@@ -50,6 +50,10 @@
         fclose(wfptr);                                               \
     }
 
+#define LOG(f_, ...) \
+    printf((f_), ##__VA_ARGS__); \
+    file_log((f_), ##__VA_ARGS__);
+
 #define DEF_SERIALIZER(type, file) \
     DEF_READ_TYPE(type, file);     \
     DEF_WRITE_TYPE(type, file);
@@ -62,19 +66,6 @@ typedef struct file_content_t
     uint8_t *payload;
 } file_content;
 
-void txtlog(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    FILE *f = fopen("log.txt", "a+");
-    if (f != NULL)
-    {
-        vfprintf(f, format, args);
-    }
-    vprintf(format, args);
-    va_end(args);
-}
-
 int str_ends_with(const char *str, const char *suffix)
 {
     if (!str || !suffix)
@@ -86,7 +77,19 @@ int str_ends_with(const char *str, const char *suffix)
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
 
-file_content *read_file(char *path)
+void file_log(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    FILE *f = fopen("log.txt", "a+");
+    if (f != NULL)
+    {
+        vfprintf(f, format, args);
+    }
+    va_end(args);
+}
+
+file_content *file_read(char *path)
 {
     file_content *fcontent = (file_content *)malloc(sizeof(file_content));
     fcontent->path = path;

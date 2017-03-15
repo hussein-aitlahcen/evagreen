@@ -11,6 +11,7 @@
 #include <time.h>
 #include <libgen.h>
 #include <dirent.h>
+#include <inttypes.h>
 
 #include "net.h"
 #include "var.h"
@@ -25,21 +26,22 @@ typedef struct agent_local_conf_t
 DEF_SERIALIZER(agent_remote_conf, CONF_REMOTE_FILE);
 DEF_SERIALIZER(agent_local_conf, CONF_LOCAL_FILE);
 
+int network_initialized = 0;
 agent_remote_conf *r_conf;
 agent_local_conf *l_conf;
 
-agent_local_conf *load_local_conf()
+void load_local_conf()
 {
     agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
     read_agent_local_conf(local);
-    return local;
+    l_conf = local;
 }
 
-agent_remote_conf *load_remote_conf()
+void load_remote_conf()
 {
     agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
     read_agent_remote_conf(remote);
-    return remote;
+    r_conf = remote;
 }
 
 int32_t time_expired(time_t last_exec, time_t interval)
@@ -68,20 +70,19 @@ int32_t file_exists(const char *path)
     return access(path, F_OK) != -1;
 }
 
-int network_initialized = 0;
 void init_network()
 {
     if (network_initialized)
         return;
 
-    txtlog("initializing network\n");
+    LOG("initializing network\n");
 
     network_initialized = 1;
 }
 
 void close_socket(int32_t socket)
 {
-    txtlog("shutting down network\n");
+    LOG("shutting down network\n");
     shutdown(socket, SHUT_RDWR);
     close(socket);
 }
@@ -132,6 +133,8 @@ void read_data(int32_t socket, void *dst, ssize_t dst_length)
 
 void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_length)
 {
+    LOG("sending message: OpCode=%d, Size=%d\n", opcode, payload_length);
+
     // network_header = [i4_size i1_opcode]
     // [network_header  payload]
     int32_t total_size = sizeof(network_header) + payload_length;
@@ -147,7 +150,6 @@ void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_
     {
         memcpy(&buffer[sizeof(network_header)], payload, payload_length);
     }
-    txtlog("sending message: OpCode=%d, Size=%d\n", &header.op_code, &header.data_size);
     size_t sent = 0;
     do
     {
@@ -168,7 +170,7 @@ void send_data_object(int32_t socket, DataType type, int8_t *data, uint32_t data
 
 void send_data_temperature(int32_t socket, int32_t temperature)
 {
-    txtlog("sending temperature\n");
+    LOG("sending temperature\n");
     int8_t data[sizeof(int32_t)];
     memcpy(&data, &temperature, sizeof(int32_t));
     send_data_object(socket, DATA_TEMPERATURE, data, sizeof(data));
@@ -179,10 +181,8 @@ void send_data_image(int32_t socket, file_content *image)
     /*
         data buffer = [file_name_length       file_name       payload_length      payload]
     */
+    LOG("sending image\n");
     char *file_name = basename(image->path);
-
-    txtlog("sending image\n", file_name);
-
     int32_t file_name_length = strlen(file_name);
     int32_t data_length = sizeof(int32_t) + file_name_length + sizeof(int32_t) + image->size + sizeof(int64_t);
     int8_t data[data_length];
@@ -211,8 +211,8 @@ void send_images(int32_t socket)
             {
                 char path[256] = IMAGE_DIRECTORY;
                 char *image_path = strcat(path, ent->d_name);
-                file_content *image_content = read_file(image_path);
-                printf("image name=%s, size=%d\n", image_path, image_content->size);
+                file_content *image_content = file_read(image_path);
+                LOG("image name=%s, size=%d\n", image_path, image_content->size);
                 send_data_image(socket, image_content);
                 free(image_content->payload);
                 free(image_content);
@@ -230,7 +230,7 @@ void init_local_conf()
 {
     if (file_exists(CONF_LOCAL_FILE))
         return;
-    txtlog("initializing local configuration\n");
+    LOG("initializing local configuration\n");
     agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
     local->last_upload = 0;
     local->last_snapshot = 0;
@@ -244,11 +244,11 @@ void init_remote_conf(int32_t socket)
 {
     if (file_exists(CONF_REMOTE_FILE))
         return;
-    txtlog("initializing remote configuration\n");
+    LOG("initializing remote configuration\n");
     send_data(socket, CMSG_CONFIGREQ, NULL, 0);
     agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
     read_data(socket, remote, sizeof(agent_remote_conf));
-    txtlog("remote configuration received.\n");
+    LOG("remote configuration received.\n");
     save_agent_remote_conf(remote);
     free(remote);
 }
@@ -261,8 +261,8 @@ void bootstrap_config(int32_t socket)
 {
     init_local_conf();
     init_remote_conf(socket);
-    l_conf = load_local_conf();
-    r_conf = load_remote_conf();
+    load_local_conf();
+    load_remote_conf();
 }
 
 /*

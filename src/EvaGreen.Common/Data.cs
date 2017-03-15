@@ -4,6 +4,12 @@ namespace EvaGreen.Common
 {
     public sealed class Data
     {
+        public const int STRING_MAX_SIZE = 256;
+
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        [Indexed]
         public int AgentId { get; set; }
 
         public DataType Type { get; set; }
@@ -12,10 +18,10 @@ namespace EvaGreen.Common
 
         public long IntegrationDate { get; set; }
 
-        [MaxLength(256)]
+        [MaxLength(STRING_MAX_SIZE)]
         public string Value { get; set; }
 
-        [MaxLength(256)]
+        [MaxLength(STRING_MAX_SIZE)]
         public string Description { get; set; }
     }
 }
