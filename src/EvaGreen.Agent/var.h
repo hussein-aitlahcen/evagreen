@@ -1,5 +1,3 @@
-
-#define AGENT_ID 1
 #define IMAGE_DIRECTORY "./images/"
 #define IMAGE_EXTENSION ".png"
 #define SERVER_HOST "127.0.0.1"

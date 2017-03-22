@@ -18,9 +18,7 @@ typedef struct network_header_t
     uint8_t op_code;
     int32_t agent_id;
 } network_header;
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 typedef struct agent_remote_conf_t
 {
     time_t upload_interval;

@@ -2,7 +2,12 @@
 import { AuthHttp } from 'angular2-jwt';
 import { Observable } from 'rxjs/Observable';
 
+
 export class Data {
+
+    public static DATA_IMAGE = 1;
+    public static DATA_TEMPERATURE = 2;
+
     constructor(public id: Number,
         public agentId: Number,
         public type: Number,

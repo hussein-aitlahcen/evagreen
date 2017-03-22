@@ -1,6 +1,6 @@
 ﻿import 'rxjs/Rx';
 
-import { NgModule, ApplicationRef } from '@angular/core';
+import { NgModule, ApplicationRef, Compiler } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpModule } from '@angular/http';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +20,7 @@ import { LoggedInGuard } from './evagreen/shared/logged-in.guard';
 import { UserService, AUTH_TOKEN_NAME } from './evagreen/shared/user.service';
 import { DataService } from './evagreen/shared/data.service';
 import { AgentService } from './evagreen/shared/agent.service';
+
 
 @NgModule({
     imports: [
@@ -55,9 +56,10 @@ import { AgentService } from './evagreen/shared/agent.service';
     ]
 })
 export class AppModule {
-    constructor(private appRef: ApplicationRef) { }
+    constructor(private appRef: ApplicationRef, private compiler: Compiler) { }
 
     ngDoBootstrap() {
+        this.compiler.clearCache();
         this.appRef.bootstrap(AppMain);
     }
 }

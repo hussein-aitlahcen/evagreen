@@ -8,7 +8,7 @@ import { Agent } from '../shared/agent.service';
     moduleId: module.id,
     selector: 'agent-detail',
     templateUrl: 'agent.component.html',
-    styles: []
+    styleUrls: ['agent.component.css']
 })
 export class AgentComponent {
 
@@ -34,5 +34,16 @@ export class AgentComponent {
                 this.datas = result;
                 this.loading = false;
             });
+    }
+
+    getLastImagePath(): String {
+        console.log(this.datas.length);
+        for (var index = 0; index < this.datas.length; index++) {
+            var data = this.datas[index];
+            if (data.type == Data.DATA_IMAGE) {
+                return data.value;
+            }
+        }
+        return "";
     }
 }

@@ -16,6 +16,7 @@
 #include "net.h"
 #include "var.h"
 #include "misc.h"
+#include "id.h"
 
 typedef struct agent_local_conf_t
 {
@@ -270,8 +271,11 @@ void bootstrap_config(int32_t socket)
 */
 void process_logic(int32_t socket)
 {
-    //send_data_temperature(socket, 12);
-    //send_data_temperature(socket, 9);
+    send_data_temperature(socket, -4);
+    send_data_temperature(socket, 1);
+    send_data_temperature(socket, 8);
+    send_data_temperature(socket, 9);
+    send_data_temperature(socket, 7);
     send_images(socket);
 }
 

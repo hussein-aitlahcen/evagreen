@@ -1,7 +1,12 @@
-<div class="agent media">
-    <i class="fa fa-camera" aria-hidden="true"></i>
+<div class="agent-detail media">
+    <div *ngIf="loading">
+        <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+    </div>
+    <div *ngIf="!loading">
+        <img class="agent-detail-avatar d-flex mr-3" src="/data/images/{{ getLastImagePath() }}" alt="Dernière image">
+    </div>
     <div class="media-body">
-        <h5 class="mt-0">Description</h5>
+        <h5 class="mt-0">Agent {{ agent.id }}</h5>
         {{ agent.description }}
     </div>
 </div>

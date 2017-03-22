@@ -1,0 +1,12 @@
+.agent-detail {
+    padding: 0.5em;
+}
+
+.agent-detail:hover {
+    background-color: beige;
+}
+
+.agent-detail-avatar {
+    width: 128px;
+    height: 96px;
+}

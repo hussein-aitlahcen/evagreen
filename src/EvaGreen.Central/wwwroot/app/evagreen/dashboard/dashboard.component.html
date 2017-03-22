@@ -1,10 +1,13 @@
-﻿<h1>Agents enregistrés</h1>
-<div *ngIf="loading">
-    <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+﻿<div *ngIf="loading">
+    <i class="fa fa-spinner fa-pulse fa-3x fa-fw text-center"></i>
     <span class="sr-only">Loading...</span>
 </div>
 <div *ngIf="!loading">
-    <div *ngFor="let agent of agents">
-        <agent-detail [agent]="agent"></agent-detail>
+    <div class="container">
+        <div class="row">
+            <ng-container *ngFor="let agent of agents; let i = index">
+                <agent-detail class="col-md-4" [agent]="agent"></agent-detail>
+            </ng-container>
+        </div>
     </div>
 </div>
