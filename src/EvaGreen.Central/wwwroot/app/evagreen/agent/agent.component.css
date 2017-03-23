@@ -1,25 +1,26 @@
-.agent-detail {
+.agent {
     margin-bottom: 0.8em;
+    cursor: pointer;
 }
 
-.agent-detail:hover {
+.agent:hover {
     background-color: lightgoldenrodyellow;
 }
 
-.agent-detail-avatar {}
+.agent-avatar {}
 
-.agent-detail-body {
+.agent-body {
     padding: 0.8rem;
 }
 
-.agent-detail-title {}
+.agent-title {}
 
-.agent-detail-description {}
+.agent-description {}
 
-.agent-detail-footer {
+.agent-footer {
     color: darkgray;
 }
 
 .card-block {
-    padding: 0.2rem;
+    padding: 0.15rem;
 }

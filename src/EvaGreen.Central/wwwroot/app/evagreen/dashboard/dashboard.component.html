@@ -6,7 +6,7 @@
     <div class="container">
         <div class="row">
             <ng-container *ngFor="let agent of agents; let i = index">
-                <agent-detail class="col-md-4" [agent]="agent"></agent-detail>
+                <agent (click)="onAgentSelected(agent)" class="col-md-4" [agent]="agent"></agent>
             </ng-container>
         </div>
     </div>

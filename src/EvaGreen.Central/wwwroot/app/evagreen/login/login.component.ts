@@ -12,11 +12,7 @@ enum LoginResult {
     moduleId: module.id,
     selector: 'login',
     templateUrl: 'login.component.html',
-    styles: [
-        'fieldset { border: 0; text-align: center; max-width: 400px; margin: auto; }',
-        '.form-signin { margin-top: 50px; }',
-        '.form-signin-control { margin-top: 5px; margin-bottom: 5px; }'
-    ]
+    styleUrls: ['login.component.css' ]
 })
 export class LoginComponent {
 

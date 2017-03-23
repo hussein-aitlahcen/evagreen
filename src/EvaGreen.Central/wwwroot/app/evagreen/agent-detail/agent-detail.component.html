@@ -1,0 +1,103 @@
+<div *ngIf="loading">
+    <i class="fa fa-spinner fa-pulse fa-3x fa-fw text-center"></i>
+    <span class="sr-only">Loading...</span>
+</div>
+<div *ngIf="!loading && !agent.loading">
+    <h1 class="text-center text-uppercase">Agent {{ agent.id }}</h1>
+    <hr />
+    <div class="container">
+        <div class="row text-center mb-3">
+            <div class="col-md-4 offset-md-4">
+                <button class="btn btn-primary btn-block btn-toggle-config" type="button" data-toggle="collapse" data-target="#config-container" aria-expanded="false" aria-controls="config-container">
+                    <i class="fa fa-gears"></i>
+                    Configuration
+                </button>
+            </div>
+        </div>
+        <fieldset id="config-container" class="collapse" [disabled]="saving">
+            <ngb-alert *ngIf="savingState == 2" type="danger" [dismissible]="false">
+                <i class="fa fa-warning"></i> La sauvegarde à échouée : {{ savingError }}
+            </ngb-alert>
+            <form class="form-config">
+                <div class="form-group input-group row mb-1">
+                    <label class="col-sm-3 offset-sm-2 col-form-label">
+                        <i class="fa fa-fw fa-cloud-upload"></i>
+                        Cadence d'émission
+                    </label>
+                    <input name="upload-interval" [(ngModel)]="agent.uploadInterval" type="number" class="col-sm-4 form-control form-config-control" placeholder="{{ agent.uploadInterval }}" required autofocus>
+                </div>
+                <div class="form-group input-group row mb-1">
+                    <label class="col-sm-3 offset-sm-2 col-form-label">
+                        <i class="fa fa-fw fa-flash"></i>
+                        Cadence de capture
+                    </label>
+                    <input name="snapshot-interval" [(ngModel)]="agent.snapshotInterval" type="number" class="col-sm-4 form-control form-config-control" placeholder="{{ agent.snapshotInterval }}" required autofocus>
+                </div>
+                <div class="form-group input-group row mb-1">
+                    <label class="col-sm-3 offset-sm-2 col-form-label">
+                        <i class="fa fa-fw fa-arrows-h"></i>
+                        Résolution horizontale
+                    </label>
+                    <input name="resolution-width" [(ngModel)]="agent.widthResolution" type="number" class="col-sm-4 form-control form-config-control" placeholder="{{ agent.widthResolution }}" required>
+                </div>
+                <div class="form-group input-group row">
+                    <label class="col-sm-3 offset-sm-2 col-form-label">
+                        <i class="fa fa-fw fa-arrows-v"></i>
+                        Résolution verticale
+                    </label>
+                    <input name="resolution-height" [(ngModel)]="agent.heightResolution" type="number" class="col-sm-4 form-control form-config-control" placeholder="{{ agent.heightResolution }}" required>
+                </div>
+                <div class="form-group input-group row">
+                    <label class="col-sm-3 offset-sm-2 col-form-label">
+                        <i class="fa fa-fw fa-unlink"></i>
+                        Contact initial
+                    </label>
+                    <input name="initial-contact" [(ngModel)]="agent.initialContact" type="checkbox" class="col-sm-4 form-control form-config-control" placeholder="{{ agent.initialContact }}" required>
+                </div>
+                <div class="form-group input-group row">
+                    <label class="col-sm-3 offset-sm-2 col-form-label">
+                        <i class="fa fa-fw fa-comment-o"></i>
+                        Description
+                    </label>
+                    <textarea name="description" class="col-sm-4 form-control form-config-control" rows="3" [(ngModel)]="agent.description" required></textarea>
+                </div>
+                <div class="tow">
+                    <button (click)="saveAgentConfiguration()" class="col-md-4 offset-md-4 btn btn-success btn-block text-center btn-save-config" type="submit">
+                        <i class="fa fa-check"></i>
+                        Sauvegarder
+                    </button>
+                </div>
+            </form>
+        </fieldset>
+    </div>
+    <hr>
+    <div class="row mb-3">
+        <div class="col-6 col-sm-4 mb-1">
+            <div (click)="goToImages()" class="card card-inverse card-success card-click z-layer-hover-2">
+                <div class="card-block bg-success">
+                    <i class="fa fa-image fa-3x"></i>
+                    <h6 class="text-uppercase">Image</h6>
+                    <h1 class="display-4">134</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 mb-1">
+            <div (click)="goToMeasures()" class="card card-inverse card-danger card-click z-layer-hover-2">
+                <div class="card-block bg-danger">
+                    <i class="fa fa-bar-chart fa-3x"></i>
+                    <h6 class="text-uppercase">Mesures</h6>
+                    <h1 class="display-4">87</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 mb-1">
+            <div (click)="goToVideos()" class="card card-inverse card-info card-click z-layer-hover-2">
+                <div class="card-block bg-info">
+                    <i class="fa fa-video-camera fa-3x"></i>
+                    <h6 class="text-uppercase">Vidéos</h6>
+                    <h1 class="display-4">125</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

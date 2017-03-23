@@ -14,6 +14,7 @@ import { AppMain } from './evagreen/main.component';
 import { LoginComponent } from './evagreen/login/login.component';
 import { DashboardComponent } from './evagreen/dashboard/dashboard.component';
 import { AgentComponent } from './evagreen/agent/agent.component';
+import { AgentDetailComponent } from './evagreen/agent-detail/agent-detail.component';
 
 import { LoggedInGuard } from './evagreen/shared/logged-in.guard';
 
@@ -34,7 +35,8 @@ import { AgentService } from './evagreen/shared/agent.service';
         AppMain,
         LoginComponent,
         DashboardComponent,
-        AgentComponent
+        AgentComponent,
+        AgentDetailComponent
     ],
     providers: [
         provideAuth({

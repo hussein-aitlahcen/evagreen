@@ -1,30 +1,36 @@
-<div class="card agent-detail">
-    <div *ngIf="loading">
-        <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+<div class="card agent z-layer-hover-1">
+    <div *ngIf="agent.loading">
+        <i class="fa fa-spinner fa-pulse fa-3x fa-fw "></i>
     </div>
-    <div *ngIf="!loading">
-        <img class="img-fluid agent-detail-avatar" src="/data/images/{{ getLastImagePath() }}" alt="Dernière image">
-    </div>
-    <hr class="m-0">
-    <div class="agent-detail-body">
-        <div class="card-block">
-            <h5 class="card-title agent-detail-title">
-                <strong>
-                    <i class="fa fa-camera"></i>
+    <div *ngIf="!agent.loading ">
+        <img class="img-fluid agent-detail-avatar " src="/data/images/{{ agent.getLastImagePath() }} " alt="Dernière image ">
+        <hr class="m-0 ">
+        <div class="agent-body">
+            <div class="card-block ">
+                <h5 class="card-title text-uppercase agent-title">
+                    <strong>
+                    <i class="fa fa-camera "></i>
                     Agent {{ agent.id }}
                 </strong>
-            </h5>
-            <hr class="m-1">
-            <div class="card-text text-muted agent-detail-description">
-                {{ agent.description }}
-            </div>
-            <hr class="m-1">
-            <div class="agent-detail-footer">
-                <small>
-                    Données acquises : {{ datas.length }}
-                    <br>
-                    Dernier contact : {{ getLastContact() }}
-                </small>
+                </h5>
+                <div class="card-text text-muted agent-description">
+                    <hr class="m-1">
+                    <small>
+                        <i class="fa fa-quote-left fa-border pr-1"></i>
+                        {{ agent.description }}
+                        <i class="fa fa-quote-right fa-border pl-1"></i>
+                    </small>
+                    <hr class="m-1">
+                </div>
+                <div class="agent-footer">
+                    <small>
+                        <i class="fa fa-cloud-download"></i>
+                        Données acquises : {{ agent.datas.length }}
+                        <br>
+                        <i class="fa fa-link"></i>
+                        Dernier contact : {{ agent.getLastContact() }}
+                    </small>
+                </div>
             </div>
         </div>
     </div>

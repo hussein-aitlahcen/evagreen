@@ -8,7 +8,7 @@ import { UserService } from '../shared/user.service';
     moduleId: module.id,
     selector: 'dashboard',
     templateUrl: 'dashboard.component.html',
-    styles: []
+    styles: ['dashboard.component.css']
 })
 export class DashboardComponent {
 
@@ -36,5 +36,9 @@ export class DashboardComponent {
                 this.agents = result;
                 this.loading = false;
             });
+    }
+
+    onAgentSelected(agent: Agent): void {
+        this.router.navigate(['/agent/detail', agent.id]);
     }
 }
