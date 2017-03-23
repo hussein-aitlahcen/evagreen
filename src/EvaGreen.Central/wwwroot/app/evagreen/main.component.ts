@@ -8,4 +8,4 @@ import { APP_ROUTES } from '../routes';
     styleUrls: ['main.component.css'],
     encapsulation: ViewEncapsulation.None
 })
-export class AppMain {}
+export class AppMain { }

@@ -1,12 +1,25 @@
 .agent-detail {
-    padding: 0.5em;
+    margin-bottom: 0.8em;
 }
 
 .agent-detail:hover {
-    background-color: beige;
+    background-color: lightgoldenrodyellow;
 }
 
-.agent-detail-avatar {
-    width: 128px;
-    height: 96px;
+.agent-detail-avatar {}
+
+.agent-detail-body {
+    padding: 0.8rem;
+}
+
+.agent-detail-title {}
+
+.agent-detail-description {}
+
+.agent-detail-footer {
+    color: darkgray;
+}
+
+.card-block {
+    padding: 0.2rem;
 }

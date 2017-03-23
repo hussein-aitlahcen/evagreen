@@ -41,7 +41,7 @@
     },
     "devDependencies": {
         "@angular/compiler-cli": "2.4.6",
-        "typescript": "^2.0.3",
-        "typings": "^1.4.0"
+        "typescript": "^2.2.1",
+        "typings": "^2.1.0"
     }
 }
