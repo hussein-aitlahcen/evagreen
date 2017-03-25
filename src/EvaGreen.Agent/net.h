@@ -21,10 +21,10 @@ typedef struct network_header_t
 
 typedef struct agent_remote_conf_t
 {
-    time_t upload_interval;
-    time_t snapshot_interval;
+    int64_t upload_interval;
+    int64_t snapshot_interval;
     int32_t resolution_w;
     int32_t resolution_h;
-    uint8_t initial_contact;
+    int8_t initial_contact;
 } agent_remote_conf;
 #pragma pack(pop)

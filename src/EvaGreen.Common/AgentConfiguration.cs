@@ -6,8 +6,8 @@ namespace EvaGreen.Common
     {
         public const int DEFAULT_WIDTH = 640;
         public const int DEFAULT_HEIGHT = 480;
-        public const long DEFAULT_UPLOAD_INTERVAL = 1000 * 60 * 60 * 12;
-        public const long DEFAULT_SNAPSHOT_INTERVAL = 1000 * 60 * 5;
+        public const long DEFAULT_UPLOAD_INTERVAL = 0;
+        public const long DEFAULT_SNAPSHOT_INTERVAL = 0;
 
         public AgentConfiguration()
         {
@@ -28,9 +28,9 @@ namespace EvaGreen.Common
 
         public long SnapshotInterval { get; set; }
 
-        public uint WidthResolution { get; set; }
+        public int WidthResolution { get; set; }
 
-        public uint HeightResolution { get; set; }
+        public int HeightResolution { get; set; }
 
         public bool InitialContact { get; set; }
 

@@ -37,7 +37,9 @@
         "@ng-bootstrap/ng-bootstrap": "1.0.0-alpha.20",
         "angular-in-memory-web-api": "~0.1.5",
         "angular2-jwt": "^0.1.23",
-        "systemjs": "0.19.39"
+        "systemjs": "0.19.39",
+        "d3": "^3.5.15",
+        "nvd3": "^1.8.2"
     },
     "devDependencies": {
         "@angular/compiler-cli": "2.4.6",

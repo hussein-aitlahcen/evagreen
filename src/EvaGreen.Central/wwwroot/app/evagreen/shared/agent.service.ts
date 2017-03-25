@@ -34,51 +34,19 @@ export class Agent {
     }
 
     getLastImagePath(): String {
-        for (var index = 0; index < this.datas.length; index++) {
-            var data = this.datas[index];
-            if (data.type == Data.DATA_IMAGE) {
-                return data.value;
-            }
+        let images = this.datas.filter(d => d.type == Data.DATA_IMAGE);
+        if (images.length > 0) {
+            return images[images.length - 1].value;
         }
         return "";
     }
 
     getLastContact(): String {
         if (this.datas.length > 0) {
-            var recentlyReceived = this.datas[0];
-            return this.getTimeDifference(new Date(), new Date(recentlyReceived.integrationDate.valueOf() * 1000));
+            let mostRecent = this.datas[this.datas.length - 1];
+            return mostRecent.getIntegrationTime();
         }
         return "jamais";
-    }
-
-    getTimeDifference(current: Date, previous: Date): String {
-
-        var msPerMinute = 60 * 1000;
-        var msPerHour = msPerMinute * 60;
-        var msPerDay = msPerHour * 24;
-        var msPerMonth = msPerDay * 30;
-        var msPerYear = msPerDay * 365;
-
-        var elapsed = (current.valueOf() - previous.valueOf());
-
-        if (elapsed < msPerMinute) {
-            return "il y à " + Math.round(elapsed / 1000) + " secondes";
-        }
-        else if (elapsed < msPerHour) {
-            return "il y à " + Math.round(elapsed / msPerMinute) + " minutes";
-        }
-        else if (elapsed < msPerDay) {
-            return "il y à " + Math.round(elapsed / msPerHour) + " heures";
-        }
-        else if (elapsed < msPerMonth) {
-            return "il y à " + Math.round(elapsed / msPerDay) + " jours";
-        }
-        else if (elapsed < msPerYear) {
-            return "il y à " + Math.round(elapsed / msPerMonth) + " mois";
-        }
-        else {
-            return "il y à " + Math.round(elapsed / msPerYear) + " ans";
-        }
     }
 }
 

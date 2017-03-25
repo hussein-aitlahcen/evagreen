@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -12,6 +13,7 @@
 #include <libgen.h>
 #include <dirent.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include "net.h"
 #include "var.h"
@@ -20,8 +22,8 @@
 
 typedef struct agent_local_conf_t
 {
-    time_t last_upload;
-    time_t last_snapshot;
+    int64_t last_upload;
+    int64_t last_snapshot;
 } agent_local_conf;
 
 DEF_SERIALIZER(agent_remote_conf, CONF_REMOTE_FILE);
@@ -33,22 +35,25 @@ agent_local_conf *l_conf;
 
 void load_local_conf()
 {
-    agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
-    read_agent_local_conf(local);
-    l_conf = local;
+    l_conf = (agent_local_conf *)malloc(sizeof(agent_local_conf));
+    read_agent_local_conf(l_conf);
 }
 
 void load_remote_conf()
 {
-    agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
-    read_agent_remote_conf(remote);
-    r_conf = remote;
+    r_conf = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
+    read_agent_remote_conf(r_conf);
+    LOG("upload_interval=%ld\n", r_conf->upload_interval);
+    LOG("snapshot_interval=%ld\n", r_conf->snapshot_interval);
+    LOG("width=%d\n", r_conf->resolution_w);
+    LOG("height=%d\n", r_conf->resolution_h);
+    LOG("initial_contact=%d\n", r_conf->initial_contact);
 }
 
-int32_t time_expired(time_t last_exec, time_t interval)
+int32_t time_expired(int64_t last_exec, int64_t interval)
 {
-    time_t current = time(NULL);
-    time_t next_exec = last_exec + interval;
+    int64_t current = time(NULL);
+    int64_t next_exec = last_exec + interval;
     if (next_exec < current)
     {
         return 1;
@@ -56,14 +61,14 @@ int32_t time_expired(time_t last_exec, time_t interval)
     return 0;
 }
 
-int32_t require_upload(agent_local_conf *local, agent_remote_conf *remote)
+int32_t require_upload()
 {
-    return time_expired(local->last_upload, remote->upload_interval);
+    return time_expired(l_conf->last_upload, r_conf->upload_interval);
 }
 
-int32_t require_snapshot(agent_local_conf *local, agent_remote_conf *remote)
+int32_t require_snapshot()
 {
-    return time_expired(local->last_snapshot, remote->snapshot_interval);
+    return time_expired(l_conf->last_snapshot, r_conf->snapshot_interval);
 }
 
 int32_t file_exists(const char *path)
@@ -71,13 +76,22 @@ int32_t file_exists(const char *path)
     return access(path, F_OK) != -1;
 }
 
+void take_snapshot()
+{
+    LOG("taking snapshot\n");
+    char cmd[256];
+    sprintf(cmd, "./agent_script.sh %d %d\n", r_conf->resolution_w, r_conf->resolution_h);
+    LOG("%s\n", cmd);
+    system(cmd);
+    l_conf->last_snapshot = time(NULL);
+    save_agent_local_conf(l_conf);
+}
+
 void init_network()
 {
     if (network_initialized)
         return;
-
     LOG("initializing network\n");
-
     network_initialized = 1;
 }
 
@@ -220,6 +234,7 @@ void send_images(int32_t socket)
             }
         }
         closedir(dir);
+        system("rm ./images/*.jpg");
     }
     else
     {
@@ -230,53 +245,72 @@ void send_images(int32_t socket)
 void init_local_conf()
 {
     if (file_exists(CONF_LOCAL_FILE))
-        return;
-    LOG("initializing local configuration\n");
-    agent_local_conf *local = (agent_local_conf *)malloc(sizeof(agent_local_conf));
-    local->last_upload = 0;
-    local->last_snapshot = 0;
-    save_agent_local_conf(local);
+    {
+        LOG("loading existing local conf\n");
+        load_local_conf();
+    }
+    else
+    {
+        LOG("initializing local configuration\n");
+        l_conf = (agent_local_conf *)malloc(sizeof(agent_local_conf));
+        l_conf->last_upload = 0;
+        l_conf->last_snapshot = 0;
+        save_agent_local_conf(l_conf);
+    }
 }
 
 /*
     Initialize remote configuration by asked the server to give it
 */
-void init_remote_conf(int32_t socket)
+void init_remote_conf()
 {
     if (file_exists(CONF_REMOTE_FILE))
-        return;
-    LOG("initializing remote configuration\n");
-    send_data(socket, CMSG_CONFIGREQ, NULL, 0);
-    agent_remote_conf *remote = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
-    read_data(socket, remote, sizeof(agent_remote_conf));
-    LOG("remote configuration received.\n");
-    save_agent_remote_conf(remote);
-    free(remote);
+    {
+        LOG("loading existing remote conf\n");
+        load_remote_conf();
+    }
+    else
+    {
+        int32_t socket = connect_socket();
+        LOG("initializing remote configuration\n");
+        send_data(socket, CMSG_CONFIGREQ, NULL, 0);
+        r_conf = (agent_remote_conf *)malloc(sizeof(agent_remote_conf));
+        read_data(socket, r_conf, sizeof(agent_remote_conf));
+        LOG("remote configuration received.\n");
+        save_agent_remote_conf(r_conf);
+        close_socket(socket);
+    }
 }
 
 /*
     First step, check whenever we are booting the app for the first time.
     If so, the config should be loaded.
 */
-void bootstrap_config(int32_t socket)
+void bootstrap_config()
 {
     init_local_conf();
-    init_remote_conf(socket);
-    load_local_conf();
-    load_remote_conf();
+    init_remote_conf();
 }
 
 /*
 
 */
-void process_logic(int32_t socket)
+void process_logic()
 {
-    send_data_temperature(socket, -4);
-    send_data_temperature(socket, 1);
-    send_data_temperature(socket, 8);
-    send_data_temperature(socket, 9);
-    send_data_temperature(socket, 7);
-    send_images(socket);
+    LOG("processing logic\n");
+    if (require_snapshot())
+    {
+        take_snapshot();
+    }
+    if (require_upload())
+    {
+        int32_t socket = connect_socket();
+        send_data_temperature(socket, rand() % 27 + 3);
+        send_images(socket);
+        close_socket(socket);
+        l_conf->last_upload = time(NULL);
+        save_agent_local_conf(l_conf);
+    }
 }
 
 /*
@@ -286,9 +320,8 @@ void process_logic(int32_t socket)
 */
 int32_t main(int argc, char **argv)
 {
-    int32_t socket = connect_socket();
-    bootstrap_config(socket);
-    process_logic(socket);
-    close_socket(socket);
+    srand(time(NULL));
+    bootstrap_config();
+    process_logic();
     return 0;
 };

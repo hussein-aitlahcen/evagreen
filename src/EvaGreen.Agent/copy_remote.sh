@@ -1,0 +1,1 @@
+scp ./*.c ./*.h ./agent_script.sh pi@raspberrypi.local:~/evagreen/

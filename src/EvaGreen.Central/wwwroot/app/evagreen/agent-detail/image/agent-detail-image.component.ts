@@ -8,7 +8,7 @@ import { AgentService, Agent } from '../../shared/agent.service';
     templateUrl: 'agent-detail-image.component.html',
     styleUrls: ['agent-detail-image.component.css']
 })
-export class AgentDetailComponent {
+export class AgentDetailImageComponent {
     @Input()
-    datas: Data[];
+    images: Data[];
 }

@@ -15,16 +15,14 @@
             {                                                       \
                 if (!feof(rfptr))                                   \
                 {                                                   \
-                    fprintf(stderr, "error: reading file\n");       \
+                    LOG("error: reading file\n");                   \
                     fclose(rfptr);                                  \
-                    exit(1);                                        \
                 }                                                   \
             }                                                       \
         }                                                           \
         else                                                        \
         {                                                           \
-            fprintf(stderr, "error: opening file for reading\n");   \
-            exit(1);                                                \
+            LOG("error: opening file for reading\n");               \
         }                                                           \
         fclose(rfptr);                                              \
     }
@@ -37,20 +35,18 @@
         {                                                            \
             if (fwrite(ptr, 1, sizeof(type), wfptr) != sizeof(type)) \
             {                                                        \
-                fprintf(stderr, "error: saving file\n");             \
+                LOG("error: saving file\n");                         \
                 fclose(wfptr);                                       \
-                exit(1);                                             \
             }                                                        \
         }                                                            \
         else                                                         \
         {                                                            \
-            fprintf(stderr, "error: opening file for writing\n");    \
-            exit(1);                                                 \
+            LOG("error: opening file for writing\n");                \
         }                                                            \
         fclose(wfptr);                                               \
     }
 
-#define LOG(f_, ...) \
+#define LOG(f_, ...)             \
     printf((f_), ##__VA_ARGS__); \
     file_log((f_), ##__VA_ARGS__);
 

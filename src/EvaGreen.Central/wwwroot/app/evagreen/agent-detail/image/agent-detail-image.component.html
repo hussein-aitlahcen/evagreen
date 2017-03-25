@@ -1,0 +1,21 @@
+<div class="row">
+    <ng-container *ngFor="let image of images | orderBy : 'creationDate':true">
+        <div class="col-md-4">
+            <div class="card mb-4 z-layer-hover-1">
+                <img class="card-img-top img-fluid img-responsive" src="/data/images/{{ image.value }}" alt="Card image cap">
+                <div class="card-block text-muted">
+                    <small>
+                        <i class="fa fa-fw fa-file-text-o"></i>
+                        Nom: {{ image.description }}
+                        <br>
+                        <i class="fa fa-fw fa-clock-o"></i>
+                        Capturée: {{ image.getCreationTime() }}
+                        <br>
+                        <i class="fa fa-fw fa-cloud-download"></i>
+                        Récéptionnée: {{ image.getIntegrationTime() }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

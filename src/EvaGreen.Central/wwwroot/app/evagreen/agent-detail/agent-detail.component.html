@@ -6,18 +6,16 @@
     <h1 class="text-center text-uppercase">Agent {{ agent.id }}</h1>
     <hr />
     <div class="container">
-        <div class="row text-center mb-3">
+        <div class="row mb-3">
             <div class="col-md-4 offset-md-4">
                 <button class="btn btn-primary btn-block btn-toggle-config" type="button" data-toggle="collapse" data-target="#config-container" aria-expanded="false" aria-controls="config-container">
                     <i class="fa fa-gears"></i>
                     Configuration
+                    <i class="fa fa-caret-down"></i>
                 </button>
             </div>
         </div>
         <fieldset id="config-container" class="collapse" [disabled]="saving">
-            <ngb-alert *ngIf="savingState == 2" type="danger" [dismissible]="false">
-                <i class="fa fa-warning"></i> La sauvegarde à échouée : {{ savingError }}
-            </ngb-alert>
             <form class="form-config">
                 <div class="form-group input-group row mb-1">
                     <label class="col-sm-3 offset-sm-2 col-form-label">
@@ -52,7 +50,7 @@
                         <i class="fa fa-fw fa-unlink"></i>
                         Contact initial
                     </label>
-                    <input name="initial-contact" [(ngModel)]="agent.initialContact" type="checkbox" class="col-sm-4 form-control form-config-control" placeholder="{{ agent.initialContact }}" required>
+                    <input name="initial-contact" [(ngModel)]="agent.initialContact" type="checkbox" class="col-sm-4 form-control form-config-control align-middle" placeholder="{{ agent.initialContact }}" required>
                 </div>
                 <div class="form-group input-group row">
                     <label class="col-sm-3 offset-sm-2 col-form-label">
@@ -61,7 +59,17 @@
                     </label>
                     <textarea name="description" class="col-sm-4 form-control form-config-control" rows="3" [(ngModel)]="agent.description" required></textarea>
                 </div>
-                <div class="tow">
+                <div class="row">
+                    <div class="col-md-4 offset-md-4">
+                        <ngb-alert *ngIf="savingState == 2" type="danger" [dismissible]="false">
+                            <i class="fa fa-warning"></i> La sauvegarde à échouée : {{ savingError }}
+                        </ngb-alert>
+                        <ngb-alert *ngIf="savingState == 1" type="success" [dismissible]="false">
+                            <i class="fa fa-info-circle"></i> Configuration sauvegardée, les modifications prendront effet lors du prochain contact.
+                        </ngb-alert>
+                    </div>
+                </div>
+                <div class="row">
                     <button (click)="saveAgentConfiguration()" class="col-md-4 offset-md-4 btn btn-success btn-block text-center btn-save-config" type="submit">
                         <i class="fa fa-check"></i>
                         Sauvegarder
@@ -71,32 +79,54 @@
         </fieldset>
     </div>
     <hr>
-    <div class="row mb-3">
-        <div class="col-6 col-sm-4 mb-1">
-            <div (click)="goToImages()" class="card card-inverse card-success card-click z-layer-hover-2">
-                <div class="card-block bg-success">
-                    <i class="fa fa-image fa-3x"></i>
-                    <h6 class="text-uppercase">Image</h6>
-                    <h1 class="display-4">134</h1>
+    <div class="container">
+        <div class="row mb-3">
+            <div class="col-6 col-sm-4 mb-4">
+                <div (click)="goToImageView()" class="card card-inverse card-success card-click z-layer-hover-2">
+                    <div class="card-block bg-success">
+                        <i class="fa fa-image fa-3x"></i>
+                        <h6 class="text-uppercase">Image</h6>
+                        <h1 class="display-4">
+                            {{ getImageCount() }}
+                        </h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-sm-4 mb-4">
+                <div (click)="goToMeasureView()" class="card card-inverse card-danger card-click z-layer-hover-2">
+                    <div class="card-block bg-danger">
+                        <i class="fa fa-bar-chart fa-3x"></i>
+                        <h6 class="text-uppercase">Mesures</h6>
+                        <h1 class="display-4">
+                            {{ getMeasureCount() }}
+                        </h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-sm-4 mb-4">
+                <div (click)="goToVideoView()" class="card card-inverse card-info card-click z-layer-hover-2">
+                    <div class="card-block bg-info">
+                        <i class="fa fa-video-camera fa-3x"></i>
+                        <h6 class="text-uppercase">Vidéos</h6>
+                        <h1 class="display-4">
+                            {{ getVideoCount() }}
+                        </h1>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-sm-4 mb-1">
-            <div (click)="goToMeasures()" class="card card-inverse card-danger card-click z-layer-hover-2">
-                <div class="card-block bg-danger">
-                    <i class="fa fa-bar-chart fa-3x"></i>
-                    <h6 class="text-uppercase">Mesures</h6>
-                    <h1 class="display-4">87</h1>
-                </div>
+    </div>
+    <hr>
+    <div class="mb-4">
+        <div class="container">
+            <div *ngIf="isImageView()">
+                <agent-detail-image [images]="getViewDatas()"></agent-detail-image>
             </div>
-        </div>
-        <div class="col-6 col-sm-4 mb-1">
-            <div (click)="goToVideos()" class="card card-inverse card-info card-click z-layer-hover-2">
-                <div class="card-block bg-info">
-                    <i class="fa fa-video-camera fa-3x"></i>
-                    <h6 class="text-uppercase">Vidéos</h6>
-                    <h1 class="display-4">125</h1>
-                </div>
+            <div *ngIf="isMeasureView()">
+                <agent-detail-measure [measures]="getViewDatas()"></agent-detail-measure>
+            </div>
+            <div *ngIf="isVideoView()">
+                Video
             </div>
         </div>
     </div>

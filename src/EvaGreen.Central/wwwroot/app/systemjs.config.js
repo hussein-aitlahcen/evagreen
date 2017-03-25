@@ -28,9 +28,9 @@
             'angular2-jwt': 'npm:angular2-jwt/angular2-jwt.js',
             'js-base64': 'npm:js-base64/base64.js',
             'buffer': '@empty',
-            '@ng-bootstrap/ng-bootstrap': 'npm:@ng-bootstrap/ng-bootstrap/bundles/ng-bootstrap.js'
+            '@ng-bootstrap/ng-bootstrap': 'npm:@ng-bootstrap/ng-bootstrap/bundles/ng-bootstrap.js',
+            'ng2-nvd3': 'npm:ng2-nvd3/build/lib/ng2-nvd3.js'
         },
-        // packages tells the System loader how to load when no filename and/or no extension
         packages: {
             app: {
                 main: './main.js',
@@ -47,6 +47,9 @@
                 defaultExtension: 'js'
             },
             '@ng-bootstrap/ng-bootstrap': {
+                defaultExtension: 'js'
+            },
+            'ng2-nvd3': {
                 defaultExtension: 'js'
             }
         }

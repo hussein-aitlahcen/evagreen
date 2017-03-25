@@ -18,6 +18,10 @@ export class AgentDetailComponent {
     agentId: Number;
     saving: boolean;
     savingState: Number;
+    selectedDataTypeView: Number;
+    imageCount: Number;
+    measureCount: Number;
+    videoCount: Number;
 
     constructor(private router: Router,
         private route: ActivatedRoute,
@@ -38,16 +42,48 @@ export class AgentDetailComponent {
         });
     }
 
-    goToImages(): void {
-
+    goToImageView(): void {
+        this.selectedDataTypeView = Data.DATA_IMAGE;
     }
 
-    goToMeasures(): void {
-
+    goToMeasureView(): void {
+        this.selectedDataTypeView = Data.DATA_TEMPERATURE;
     }
 
-    goToVideos(): void {
+    goToVideoView(): void {
+        this.selectedDataTypeView = Data.DATA_VIDEO;
+    }
 
+    isImageView(): boolean {
+        return this.selectedDataTypeView == Data.DATA_IMAGE;
+    }
+
+    isMeasureView(): boolean {
+        return this.selectedDataTypeView == Data.DATA_TEMPERATURE;
+    }
+
+    isVideoView(): boolean {
+        return this.selectedDataTypeView == Data.DATA_VIDEO;
+    }
+
+    getViewDatas(): Data[] {
+        return this.getDatasByType(this.selectedDataTypeView);
+    }
+
+    getImageCount(): Number {
+        return this.getDatasByType(Data.DATA_IMAGE).length;
+    }
+
+    getMeasureCount(): Number {
+        return this.getDatasByType(Data.DATA_TEMPERATURE).length;
+    }
+
+    getVideoCount(): Number {
+        return this.getDatasByType(Data.DATA_VIDEO).length;
+    }
+
+    getDatasByType(type: Number): Data[] {
+        return this.agent.datas.filter(data => data.type == type);
     }
 
     saveAgentConfiguration(): void {

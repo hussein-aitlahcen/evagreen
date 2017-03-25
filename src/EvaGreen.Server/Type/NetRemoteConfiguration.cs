@@ -19,8 +19,8 @@ namespace EvaGreen.Server.Type
         }
         public long UploadInterval;
         public long SnapshotInterval;
-        public uint WidthResolution;
-        public uint HeightResolution;
+        public int WidthResolution;
+        public int HeightResolution;
         public bool InitialContact;
     }
 }
