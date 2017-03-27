@@ -1,0 +1,1 @@
+while sleep $1; do ./a.exe; done

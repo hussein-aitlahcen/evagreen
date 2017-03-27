@@ -166,9 +166,10 @@ namespace EvaGreen.Server
                         Description = fileName
                     };
 
-                case DataType.Temperature:
+                case DataType.Measure:
+                    var measureType = reader.ReadByte();
                     var value = reader.ReadInt32();
-                    Log($"Received temperature={value}");
+                    Log($"Received measure: type={measureType}, value={value}");
                     return new Data
                     {
                         AgentId = _header.AgentId,
@@ -176,7 +177,7 @@ namespace EvaGreen.Server
                         CreationDate = DateTime.Now.ToUnixTime(),
                         IntegrationDate = DateTime.Now.ToUnixTime(),
                         Value = value.ToString(),
-                        Description = "Celcius"
+                        Description = measureType.ToString()
                     };
 
                 default:

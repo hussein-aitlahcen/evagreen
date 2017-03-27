@@ -10,6 +10,7 @@ log.txt
 
 *.conf.bin
 *.out
+*.exe
 package/*
 
 # User-specific files

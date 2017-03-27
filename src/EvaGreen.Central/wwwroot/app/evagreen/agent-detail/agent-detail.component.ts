@@ -47,7 +47,7 @@ export class AgentDetailComponent {
     }
 
     goToMeasureView(): void {
-        this.selectedDataTypeView = Data.DATA_TEMPERATURE;
+        this.selectedDataTypeView = Data.DATA_MEASURE;
     }
 
     goToVideoView(): void {
@@ -59,7 +59,7 @@ export class AgentDetailComponent {
     }
 
     isMeasureView(): boolean {
-        return this.selectedDataTypeView == Data.DATA_TEMPERATURE;
+        return this.selectedDataTypeView == Data.DATA_MEASURE;
     }
 
     isVideoView(): boolean {
@@ -75,7 +75,7 @@ export class AgentDetailComponent {
     }
 
     getMeasureCount(): Number {
-        return this.getDatasByType(Data.DATA_TEMPERATURE).length;
+        return this.getDatasByType(Data.DATA_MEASURE).length;
     }
 
     getVideoCount(): Number {

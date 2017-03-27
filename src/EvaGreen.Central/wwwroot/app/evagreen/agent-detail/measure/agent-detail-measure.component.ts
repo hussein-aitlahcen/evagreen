@@ -39,47 +39,47 @@ export class AgentDetailMeasureComponent {
                 },
                 color: ['cornflowerblue', 'darkred'],
                 xAxis: {
-                    axisLabel: 'Date',
-                    tickFormat: function (d) {
+                    axisLabel: "Date",
+                    tickFormat: function (d: any) {
                         return d3.time.format('%d/%m/%Y %H:%M')(new Date(d));
                     }
                 },
                 x2Axis: {
-                    tickFormat: function (d) {
+                    tickFormat: function (d: any) {
                         return d3.time.format('%x')(new Date(d));
                     },
                     showMaxMin: false
                 },
                 y1Axis: {
-                    axisLabel: 'Humidité',
-                    tickFormat: function (d) {
-                        return d3.format(',f')(d) + '%';
+                    axisLabel: "Humidité",
+                    tickFormat: function (d: any) {
+                        return d3.format(',f')(d) + "%";
                     },
-                    axisLabelDistance: 12
+                    //axisLabelDistance: 12
                 },
                 y2Axis: {
-                    axisLabel: 'Température',
-                    tickFormat: function (d) {
-                        return d3.format(',f')(d) + '°C';
+                    axisLabel: "Température",
+                    tickFormat: function (d: any) {
+                        return d3.format(',f')(d) + "°C";
                     }
                 },
                 y3Axis: {
-                    tickFormat: function (d) {
-                        return d3.format(',f')(d) + '%';
+                    tickFormat: function (d: any) {
+                        return d3.format(',f')(d) + "%";
                     }
                 },
                 y4Axis: {
-                    tickFormat: function (d) {
-                        return d3.format(',f')(d) + '°C';
+                    tickFormat: function (d: any) {
+                        return d3.format(',f')(d) + "°C";
                     }
                 }
             }
         };
         this.data = [
             {
-                "key": "Humidité",
-                "bar": true,
-                "values": this.measures.map(m => {
+                key: "Humidité",
+                bar: true,
+                values: this.measures.filter(m => m.description == "2").map(m => {
                     return {
                         x: m.creationDate.valueOf() * 1000,
                         y: parseInt(m.value)
@@ -87,8 +87,8 @@ export class AgentDetailMeasureComponent {
                 })
             },
             {
-                "key": "Température",
-                "values": this.measures.map(m => {
+                key: "Température",
+                values: this.measures.filter(m => m.description == "1").map(m => {
                     return {
                         x: m.creationDate.valueOf() * 1000,
                         y: parseInt(m.value)

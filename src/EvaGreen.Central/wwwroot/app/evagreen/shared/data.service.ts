@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/Observable';
 export class Data {
 
     public static DATA_IMAGE = 0x01;
-    public static DATA_TEMPERATURE = 0x02;
+    public static DATA_MEASURE = 0x02;
     public static DATA_VIDEO = 0xFF
 
     public id: Number;

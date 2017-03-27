@@ -2,7 +2,7 @@
  * System configuration for Angular samples
  * Adjust as necessary for your application needs.
  */
-(function(global) {
+(function (global) {
     System.config({
         paths: {
             // paths serve as alias
@@ -12,6 +12,7 @@
         map: {
             // our app is within the app folder
             app: 'app',
+
             // angular bundles
             '@angular/core': 'npm:@angular/core/bundles/core.umd.js',
             '@angular/common': 'npm:@angular/common/bundles/common.umd.js',

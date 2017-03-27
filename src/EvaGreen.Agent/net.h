@@ -4,12 +4,17 @@
 typedef enum e_cmsg_opcode {
     CMSG_CONFIGREQ = 0x0A,
     CMSG_UPLOADDATA = 0x0B
-} OpCode;
+} op_code;
 
 typedef enum e_data_type {
     DATA_IMAGE = 0x01,
-    DATA_TEMPERATURE = 0x02
-} DataType;
+    DATA_MEASURE = 0x02
+} data_type;
+
+typedef enum e_measure_type {
+    MEASURE_TEMPERATURE = 0x01,
+    MEASURE_HUMIDITY = 0x02
+} measure_type;
 
 #pragma pack(push, 1)
 typedef struct network_header_t

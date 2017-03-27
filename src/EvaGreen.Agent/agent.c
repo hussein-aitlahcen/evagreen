@@ -50,6 +50,18 @@ void load_remote_conf()
     LOG("initial_contact=%d\n", r_conf->initial_contact);
 }
 
+void update_last_upload()
+{
+    l_conf->last_upload = time(NULL);
+    save_agent_local_conf(l_conf);
+}
+
+void update_last_snapshot()
+{
+    l_conf->last_snapshot = time(NULL);
+    save_agent_local_conf(l_conf);
+}
+
 int32_t time_expired(int64_t last_exec, int64_t interval)
 {
     int64_t current = time(NULL);
@@ -83,8 +95,7 @@ void take_snapshot()
     sprintf(cmd, "./agent_script.sh %d %d\n", r_conf->resolution_w, r_conf->resolution_h);
     LOG("%s\n", cmd);
     system(cmd);
-    l_conf->last_snapshot = time(NULL);
-    save_agent_local_conf(l_conf);
+    update_last_snapshot();
 }
 
 void init_network()
@@ -146,7 +157,7 @@ void read_data(int32_t socket, void *dst, ssize_t dst_length)
     } while (r != dst_length);
 }
 
-void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_length)
+void send_data(int32_t socket, op_code opcode, int8_t *payload, uint32_t payload_length)
 {
     LOG("sending message: OpCode=%d, Size=%d\n", opcode, payload_length);
 
@@ -172,7 +183,7 @@ void send_data(int32_t socket, OpCode opcode, int8_t *payload, uint32_t payload_
     } while (sent != total_size);
 }
 
-void send_data_object(int32_t socket, DataType type, int8_t *data, uint32_t data_length)
+void send_data_object(int32_t socket, data_type type, int8_t *data, uint32_t data_length)
 {
     int32_t total_length = sizeof(uint8_t) + data_length;
     int8_t buffer[total_length];
@@ -183,12 +194,14 @@ void send_data_object(int32_t socket, DataType type, int8_t *data, uint32_t data
     send_data(socket, CMSG_UPLOADDATA, buffer, total_length);
 }
 
-void send_data_temperature(int32_t socket, int32_t temperature)
+void send_data_measure(int32_t socket, measure_type type, int32_t measure)
 {
-    LOG("sending temperature\n");
-    int8_t data[sizeof(int32_t)];
-    memcpy(&data, &temperature, sizeof(int32_t));
-    send_data_object(socket, DATA_TEMPERATURE, data, sizeof(data));
+    LOG("sending measure\n");
+    int8_t buffer[sizeof(uint8_t) + sizeof(int32_t)];
+    // [e_measure_type         measure]
+    buffer[0] = type;
+    memcpy(&buffer[1], &measure, sizeof(int32_t));
+    send_data_object(socket, DATA_MEASURE, buffer, sizeof(buffer));
 }
 
 void send_data_image(int32_t socket, file_content *image)
@@ -292,6 +305,17 @@ void bootstrap_config()
     init_remote_conf();
 }
 
+void on_upload()
+{
+    int32_t socket = connect_socket();
+    // fake measures
+    send_data_measure(socket, MEASURE_TEMPERATURE, rand() % 5 + 20);
+    send_data_measure(socket, MEASURE_HUMIDITY, rand() % 10 + 70);
+    send_images(socket);
+    close_socket(socket);
+    update_last_upload();
+}
+
 /*
 
 */
@@ -304,12 +328,7 @@ void process_logic()
     }
     if (require_upload())
     {
-        int32_t socket = connect_socket();
-        send_data_temperature(socket, rand() % 27 + 3);
-        send_images(socket);
-        close_socket(socket);
-        l_conf->last_upload = time(NULL);
-        save_agent_local_conf(l_conf);
+        on_upload();
     }
 }
 
